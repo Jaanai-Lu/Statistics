@@ -1,0 +1,10 @@
+train<- read.csv('train.csv')
+Labels<-train$label
+Labels <- as.factor(Labels)
+colors = rainbow(length(unique(train$label)))
+names(colors) = unique(train$label)
+tsne<- Rtsne(train[,-1], dims = 2, perplexity=30, verbose=TRUE, max_iter = 500)
+exeTimeTsne<- system.time(tsne)
+plot(tsne$Y, t='p', main="tsne", pch= 16, col=colors[train$label], xlab="My X label", ylab="My Y label")
+names(colors)
+legend("topright", pch=c(16,16,16,16,16,16,16,16,16,16), col=c("#FF0000FF", "#FF9900FF", '#CCFF00FF','#33FF00FF','#00FF66FF','#00FFFFFF','#0066FFFF','#3300FFFF','#CC00FFFF','#FF0099FF'), legend=c("1", "0",'4','7','3','5','8','9','2','6'))
