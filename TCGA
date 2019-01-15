@@ -1,0 +1,5 @@
+install.packages("BiocInstaller",repos="http://bioconductor.org/packages/3.7/bioc")
+source("http://bioconductor.org/biocLite.R")
+biocLite("BiocUpgrade")
+biocLite('RTCGAToolbox')
+library(RTCGAToolbox)
