@@ -1,0 +1,117 @@
+重复测量：即受试者被测量不止一次。
+如下图所示：
+                                       含组间和组内因子的双因素方差分析                      时间（组内因子）
+                                            患者                                  5周                      6个月 
+                                             s1
+                        CBT                  s2
+      疗法（组间因子）                        s3
+                                             s4
+                       EMDR                  s5
+                                             s6
+我们通常关注的问题，常含有一个组内和一个组间因子的重复测量方差分析
+组内：两组受试者相同
+组间：两组受试者不同
+本次使用的数据集来源于生理生态领域
+组间因子是植物类型Type（魁北克VS.密西西比），组内因子是二氧化碳浓度conc（共7个水平）
+因变量是二氧化碳吸收量uptake
+#查看数据集前几列
+head(CO2)
+#查看两个影响因子的列联表
+table(CO2$Type,CO2$conc)
+查看数据集总是最基本的一步
+#检验假设条件  
+1.正态性检验  
+#加载程序包
+library(car)
+#正态性检验
+qqPlot(lm(uptake ~ Type + conc,data = CO2),simulate = TRUE,main = 'Q-Q Plot',labels=False,ylab = 'Value')
+数据基本均集中在直线附近，正态性假设成立。
+2.方差齐性检验  
+#方差齐性检验
+bartlett.test(uptake ~ Type,data = CO2)
+下面我们将对数据进行分析  
+#使数据集保持打开
+attach(CO2)
+#计算均值
+aggregate(uptake,by=list(Type,conc),FUN=mean)
+#计算标准差
+aggregate(uptake,by=list(Type,conc),FUN=sd)
+#重复性方差分析  
+#将conc转换为因子
+CO2$conc <- factor(CO2$conc)
+#提取出chilled处理列，控制变量
+wlbl <- subset(CO2,Treatment == 'chilled')
+#进行方差分析
+fit <- aov(uptake ~ conc*Type + Error(Plant/(conc)),wlbl)
+#查看结果
+summary(fit)
+P均小于0。05，主效应和交互效应都很显著
+结论：
+<a>  二氧化碳吸收量与植物类型有关
+<b>  二氧化碳吸收量与二氧化碳浓度有关
+#一图胜千言之绘图 
+#加载程序包
+library('ggplot2')
+#计算uptake均值并存储
+data <- aggregate(uptake,by=list(Type,conc),FUN=mean)
+#以上面的计算结果绘制均值变化曲线
+ggplot(data = data,mapping = aes(x=Group.2,y=x,colour=Group.1)) +
+  #绘制点图
+  geom_point() +
+  #绘制折线图
+  geom_line() +
+  #更改X轴标题
+  xlab(label = 'conc') +
+  #更改Y轴标题
+  ylab(label = 'Mean of uptake') +
+  #设置背景背景
+  theme_bw() +
+  #设置XY轴标题的类型
+  theme(axis.title = element_text(family = 'serif',face = 'italic'))
+#绘传入数据
+ggplot(data = wlbl,aes(x=conc,y=uptake,colour=Type)) +
+  #绘制箱型图
+  geom_boxplot() +
+  #设置背景主题
+  theme_bw() +
+  #更改主题元素
+  theme(panel.background = element_blank(),
+        panel.grid = element_blank(),
+        axis.title = element_text(family = 'serif',face = 'italic'))
+从以上任意一幅图都可以看出，魁北克省的植物比密西西比州的植物二氧化碳吸收率高，而且随着CO2浓度的升高，差异越来越明显。
+#上手
+c(0.18, 0.2, 0.19, 0.22, 0.21, 0.17, 0.16, 0.18) -> cm1
+c(0.2, 0.22, 0.23, 0.23, 0.22, 0.2, 0.19, 0.2) -> cm3
+c(0.22, 0.23, 0.22, 0.25, 0.26, 0.23, 0.19, 0.21) -> cm6
+c(0.17, 0.15, 0.18, 0.19, 0.2, 0.14, 0.18, 0.15) -> tm1
+c(0.15, 0.14, 0.15, 0.16, 0.15, 0.1, 0.13, 0.11) -> tm3
+c(0.08, 0.1, 0.14, 0.12, 0.11, 0.07, 0.1, 0.07) -> tm6
+c(cm1, cm3, cm6, tm1, tm3, tm6) -> x
+c(rep('control', 8), rep('control', 8), rep('control', 8), rep('experiment', 8), rep('experiment', 8), rep('experiment', 8)) -> group
+c(rep(10, 8), rep(30, 8), rep(60, 8), rep(10, 8), rep(30, 8), rep(60, 8)) -> time
+data.frame(x, group, time) -> data
+library(car)
+qqPlot(lm(x ~ group + time, data = data), simulate = TRUE, main = 'Q-Q Plot', labels = FALSE, ylab = 'Value')
+bartlett.test(x ~ group, data = data)
+library(xlsx)
+write.xlsx(data, 'data.xlsx')
+read.xlsx('data.xlsx', sheetIndex = 'Sheet1') -> data
+factor(data$time) -> data$time
+# 含单个组内因子（W）和单个组间因子（B）的重复测量ANOVA
+# y ~ B * W + Error(subject/W) #顺序很重要！
+summary(aov(x ~ group*time + Error(subject/(time)), data = data))
+#作图方法一
+par(las = 2)
+par(mar = c(10, 4, 4, 2))
+with(data, interaction.plot(time, group, J, type = 'b', col = c('red','blue'), pch = c(16, 18), main = 'Interaction Plot for Group and Time'))
+#作图方法二
+library(pacman)
+p_load(ggplot2)
+data <- aggregate(x, by = list(group, time), FUN = mean)
+ggplot(data = data, mapping = aes(x = Group.2, y = x, colour = Group.1)) +
+geom_point() +
+geom_line() +
+xlab(label = 'time') +
+ylab(label = 'Mean of J') +
+theme_bw() +
+theme(axis.title = element_text(family = 'serif', face = 'italic'))
