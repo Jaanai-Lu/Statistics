@@ -41,6 +41,18 @@ qqPlot(lm(uptake ~ Type + conc,data = CO2),simulate = TRUE,main = 'Q-Q Plot',lab
 2.方差齐性检验  
 #方差齐性检验
 bartlett.test(uptake ~ Type,data = CO2)
+3.球形检验 (Mauchly's Test of Sphericity) 是前提条件
+该检验综合评价组间以及各个时间点测量指标是否满足方差齐性的，P值大于等于0.1表示满足球形检验
+OBrienKaiser[,-c(1:2)] -> data #去掉前两列
+as.matrix(data) -> data #将data从数据框转换为矩阵，data的格式为16行×15列
+lm(data ~ 1) -> mlmfit #进行多元线性回归 (多个因变量)
+factor(rep(c("A","B","C"), c(5, 5, 5))) -> group
+ordered(rep(1:5,3)) -> time
+data.frame(group,time) -> idata
+#球形检验
+mauchly.test(mlmfit, M = ~ group + time, X = ~ time, data = idata)
+由结果可以看出，球形检验的P值为0.0863<0.1，尚不能认为该重复测量资料满足球形检验的前提假设
+应该采用Greenhouse-Geisser方法进行校正，或者采用线性混合效应模型等进行分析
 下面我们将对数据进行分析  
 #使数据集保持打开
 attach(CO2)
@@ -102,6 +114,16 @@ c(cm1, cm3, cm6, tm1, tm3, tm6) -> x
 c(rep('control', 8), rep('control', 8), rep('control', 8), rep('experiment', 8), rep('experiment', 8), rep('experiment', 8)) -> group
 c(rep(10, 8), rep(30, 8), rep(60, 8), rep(10, 8), rep(30, 8), rep(60, 8)) -> time
 data.frame(x, group, time) -> data
+#球形检验
+read.xlsx('zhang1.xlsx', sheetIndex = 'Sheet2') -> data
+as.matrix(data) -> data
+lm(data ~ 1) -> mlmfit
+factor(rep(c("control","experiment"), c(3, 3))) -> group
+c(rep(c(10, 30, 60, 10, 30, 60))) -> time
+data.frame(group,time) -> idata
+mauchly.test(mlmfit, M = ~ group + time, X = ~ time, data = idata)
+#P值为1大于0.01，即可认为该重复测量资料满足球形检验的前提假设
+#进一步分析
 library(car)
 qqPlot(lm(x ~ group + time, data = data), simulate = TRUE, main = 'Q-Q Plot', labels = FALSE, ylab = 'Value')
 bartlett.test(x ~ group, data = data)
