@@ -8,17 +8,29 @@
                                              s4
                        EMDR                  s5
                                              s6
+疗法和时间都作为因子时，我们既可分析疗法的影响（时间跨度上的平均）和时间的影响（疗法类型跨度上的平均），又可分析疗法和时间的交互影响
+前两个称作主效应，交互部分称作交互效应
+当设计包含两个甚至更多因子时，便是因素方差分析设计，比如两因子时称作双因素方差分析，三因子时称作三因素方差分析
+若因子设计包括组内和组间因子，又称作混合模型方差分析，当前的例子就是典型的双因素混合模型方差分析
 我们通常关注的问题，常含有一个组内和一个组间因子的重复测量方差分析
 组内：两组受试者相同
 组间：两组受试者不同
 本次使用的数据集来源于生理生态领域
 组间因子是植物类型Type（魁北克VS.密西西比），组内因子是二氧化碳浓度conc（共7个水平）
+组间、组内因子都需要转换为因子变量
 因变量是二氧化碳吸收量uptake
 #查看数据集前几列
 head(CO2)
 #查看两个影响因子的列联表
 table(CO2$Type,CO2$conc)
 查看数据集总是最基本的一步
+通常处理的数据集是宽格式（wide format），即列是变量，行是观测值，而且一行一个受试对象
+不过在处理重复测量设计时，需要有长格式（long format）数据才能拟合模型
+在长格式中，因变量的每次测量都要放到它独有的行中，CO2数据集即该种形式
+reshape包可方便地将数据转换为相应的格式
+传统的重复测量方差分析假设任意组内因子的协方差矩阵为球形，并且任意组内因子两水平间的方差之差都相等
+但在现实中这种假设不可能满足，于是衍生了一系列备选方法：
+见《R语言实战》216页
 #检验假设条件  
 1.正态性检验  
 #加载程序包
@@ -42,7 +54,7 @@ CO2$conc <- factor(CO2$conc)
 #提取出chilled处理列，控制变量
 wlbl <- subset(CO2,Treatment == 'chilled')
 #进行方差分析
-fit <- aov(uptake ~ conc*Type + Error(Plant/(conc)),wlbl)
+fit <- aov(uptake ~ Type*conc + Error(Plant/(conc)),wlbl)
 #查看结果
 summary(fit)
 P均小于0。05，主效应和交互效应都很显著
@@ -115,3 +127,5 @@ xlab(label = 'time') +
 ylab(label = 'Mean of J') +
 theme_bw() +
 theme(axis.title = element_text(family = 'serif', face = 'italic'))
+#绘制箱式图
+ boxplot(J ~ group * time, data = data, col = (c('gold', 'green')), main = 'Control and Experiment', ylab = 'J(mv)')
