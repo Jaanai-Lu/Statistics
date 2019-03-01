@@ -1,0 +1,7 @@
+c(2, 3, 3, 5, 2, 1, 3, 5, 2, 1) -> cont
+c(1, 1, 5, 2, 2, 1, 2, 1, 1, 2) -> test
+shapiro.test(cont)
+# 求分位数
+quantile(cont, c(.25, .5, .75))
+# 两组有序分类变量资料的秩和检验
+wilcox.test(cont, test)
