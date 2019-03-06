@@ -24,3 +24,12 @@ mtcars1 %>%
 filter(str_detect(rowname, pattern = 'Merc'))
 mtcars1 %>%
 filter(str_detect(rowname, pattern = '^M'))
+
+# 例子
+read.xlsx('kou.xlsx', sheetName = '585019681', encoding = 'UTF-8') -> data
+data %>%
+  rownames_to_column() %>%
+  as_tibble() -> data.1
+data.1 %>%
+  filter(data.1$课程名称 == '语言学导论') -> yuyan
+write.xlsx(yuyan, 'yuyan.xlsx')
