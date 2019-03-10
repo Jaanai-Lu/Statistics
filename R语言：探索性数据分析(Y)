@@ -51,3 +51,153 @@ diagnose_report(df)
 # 数据是否存在缺失值？如果存在缺失值，能否解释缺失的原因？是随机缺失还是非随机缺失，或者是介于两者之间。
 # 能否根据其自身的特征和缺失的特点进行插值，还是应该剔除？
 # 数据特征中是否存在离群值？是什么原因导致的？是真实的还是因为错误的操作？为了进行建模，应该如何处理这些离群值？（中心化？取对数？还是直接踢出）
+
+R语言ETL系列：创建字段
+有没有一些时候你想要给表格加一个新的列？本章将会介绍如何在表格中创建新的字段。但是首先我们要知道为什么要什么做，下面是可能的一些情况：
+有时候需要构造一列全部是0或1的数列，或者是给每一个记录赋予一个不同的ID；
+购物数据中，含有单价和数量，需要计算交易额，然后加入到表格中；
+我们数据中有年月日的数据，我们需要把它们拼接成一个字符格式，比如,2018年10月10日，我们需要表示为20181010或者2018/10/10；
+在tidyverse中，我们可以用mutate函数给表格增加新的一列。下面将会分节介绍，首先载入我们需要的数据和包：
+library(tidyverse)
+library(nycflights13）
+添加常数列
+这里举一个简单的例子，用iris数据集，增加一个完全为0的新列，我们会限制输出列为前六行，以免输出内容过多。
+iris %>%
+  mutate(zeros = 0) %>%
+  head
+##   Sepal.Length Sepal.Width Petal.Length Petal.Width Species zeros
+## 1          5.1         3.5          1.4         0.2  setosa     0
+## 2          4.9         3.0          1.4         0.2  setosa     0
+## 3          4.7         3.2          1.3         0.2  setosa     0
+## 4          4.6         3.1          1.5         0.2  setosa     0
+## 5          5.0         3.6          1.4         0.2  setosa     0
+## 6          5.4         3.9          1.7         0.4  setosa     0
+可以看到我们已经新增了一列，名字叫做zeros，里面的值全部是0。
+算数运算
+本例会用到flights数据，这个表中包含了航班的起飞时间（dep_time）和到达时间（arr_time），如果需要知道中间经历了多长时间，我们需要将两者相减。
+我们会先把两列取出来，然后再构造新的列：
+flights %>%
+  select(dep_time,arr_time) %>%
+  mutate(time = arr_time - dep_time)
+## # A tibble: 336,776 x 3
+##    dep_time arr_time  time
+##       <int>    <int> <int>
+##  1      517      830   313
+##  2      533      850   317
+##  3      542      923   381
+##  4      544     1004   460
+##  5      554      812   258
+##  6      554      740   186
+##  7      555      913   358
+##  8      557      709   152
+##  9      557      838   281
+## 10      558      753   195
+## # ... with 336,766 more rows
+这样一来我们就把飞行时间储存在time列中。
+事实上我们还可以这么表达：
+flights %>%
+  transmute(dep_time,arr_time,time = arr_time - dep_time)
+## # A tibble: 336,776 x 3
+##    dep_time arr_time  time
+##       <int>    <int> <int>
+##  1      517      830   313
+##  2      533      850   317
+##  3      542      923   381
+##  4      544     1004   460
+##  5      554      812   258
+##  6      554      740   186
+##  7      555      913   358
+##  8      557      709   152
+##  9      557      838   281
+## 10      558      753   195
+## # ... with 336,766 more rows
+得到结果与上面一致。transmute函数的特点就是，不会保存数据表中原有的列，自动完成了select的功能。
+文本的拼接与拆分
+这个例子中，我们来看flights数据，它包含了年（year）、月（month）、日（day）、起始点（origin）、终点（dest）的数据列。
+首先我们把这些列取出来存放到新的变量中，并进行观察：
+flights %>%
+  select(year,month,day,origin,dest) -> fl_ymd
+fl_ymd
+## # A tibble: 336,776 x 5
+##     year month   day origin dest 
+##    <int> <int> <int> <chr>  <chr>
+##  1  2013     1     1 EWR    IAH  
+##  2  2013     1     1 LGA    IAH  
+##  3  2013     1     1 JFK    MIA  
+##  4  2013     1     1 JFK    BQN  
+##  5  2013     1     1 LGA    ATL  
+##  6  2013     1     1 EWR    ORD  
+##  7  2013     1     1 EWR    FLL  
+##  8  2013     1     1 LGA    IAD  
+##  9  2013     1     1 JFK    MCO  
+## 10  2013     1     1 LGA    ORD  
+## # ... with 336,766 more rows
+拼接
+现在，我们想要把第一行的起始点和终点拼接为“EWR_IAH”的格式，放在名为origin_dest的列中，下面我们进行操作：
+fl_ymd %>%
+  mutate(origin_dest=str_c(origin, dest, sep="_")) -> fl_ymd.1
+fl_ymd.1
+## # A tibble: 336,776 x 6
+##     year month   day origin dest  origin_dest
+##    <int> <int> <int> <chr>  <chr> <chr>      
+##  1  2013     1     1 EWR    IAH   EWR_IAH    
+##  2  2013     1     1 LGA    IAH   LGA_IAH    
+##  3  2013     1     1 JFK    MIA   JFK_MIA    
+##  4  2013     1     1 JFK    BQN   JFK_BQN    
+##  5  2013     1     1 LGA    ATL   LGA_ATL    
+##  6  2013     1     1 EWR    ORD   EWR_ORD    
+##  7  2013     1     1 EWR    FLL   EWR_FLL    
+##  8  2013     1     1 LGA    IAD   LGA_IAD    
+##  9  2013     1     1 JFK    MCO   JFK_MCO    
+## 10  2013     1     1 LGA    ORD   LGA_ORD    
+## # ... with 336,766 more rows
+我们可以看到，使用mutate函数可以增加一列，而这一列通过str_c函数，把两列拼接起来，中间的分隔符号设定为下划线（“_“）。
+此外，我们可以用unite函数完成这个任务：
+#等价于
+fl_ymd %>%
+  unite(col=origin_dest, origin, dest) -> fl_ymd.2
+fl_ymd.2
+## # A tibble: 336,776 x 4
+##     year month   day origin_dest
+##    <int> <int> <int> <chr>      
+##  1  2013     1     1 EWR_IAH    
+##  2  2013     1     1 LGA_IAH    
+##  3  2013     1     1 JFK_MIA    
+##  4  2013     1     1 JFK_BQN    
+##  5  2013     1     1 LGA_ATL    
+##  6  2013     1     1 EWR_ORD    
+##  7  2013     1     1 EWR_FLL    
+##  8  2013     1     1 LGA_IAD    
+##  9  2013     1     1 JFK_MCO    
+## 10  2013     1     1 LGA_ORD    
+## # ... with 336,766 more rows
+unite中的col参数是新的列名称，后面可以放任意多的列，最后会把放进去的列都拼接起来。
+unite函数是专门用来对不同列之间字符串进行拼接的函数，默认的间隔符号就是“_”，但是可以通过sep参数改变分隔符。
+此外，我们可以注意到，如果利用unite函数，原始的两列origin和dest会消失，而mutate则是单纯增加一列。
+拆分
+那么，如果我们想要把已经拼接好的数据拆分出来，应该怎么做呢？
+我们现在就来对flm_ymd.2的origin_dest列进行拆分操作，这里我们会用到separate函数：
+fl_ymd.2 %>%
+  separate(col=origin_dest, into=c("origin", "dest"))
+## # A tibble: 336,776 x 5
+##     year month   day origin dest 
+##    <int> <int> <int> <chr>  <chr>
+##  1  2013     1     1 EWR    IAH  
+##  2  2013     1     1 LGA    IAH  
+##  3  2013     1     1 JFK    MIA  
+##  4  2013     1     1 JFK    BQN  
+##  5  2013     1     1 LGA    ATL  
+##  6  2013     1     1 EWR    ORD  
+##  7  2013     1     1 EWR    FLL  
+##  8  2013     1     1 LGA    IAD  
+##  9  2013     1     1 JFK    MCO  
+## 10  2013     1     1 LGA    ORD  
+## # ... with 336,766 more rows
+我们可以看到，separate其实是unite的逆运算，col中赋值的是需要拆分的列名称，into则是拆分之后不同部分的名称。 
+separate也有sep参数，可以调整参数来根据特殊符号进行拆分，默认的拆分参数是所有非字母符号。
+如果大家要用中文的话，应该注意，一定要使用sep参数，也就是应该写成
+fl_ymd.2 %>% separate(col=origin_dest, into=c(”origin“, ”dest“), sep=”_“)
+总结
+本章中，我们讲了如何用mutate创建字段。我们可以灵活地使用mutate函数，构造一个常数列，或者基于原始的数据列进行数学运算，从而构成新的列。
+这些知识对于机器学习中的特征工程尤为重要，是必须掌握的基础。
+最后，我们还介绍了如何对字符型的变量进行拼接和拆分，如果需要进行文本挖掘的话，这些技能是必不可少的。
