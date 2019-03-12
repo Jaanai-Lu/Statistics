@@ -1,0 +1,103 @@
+# utiml包
+library(pacman)
+p_load(utiml)
+mldata(mldr("flags")) -> flags # This dataset, available at http://mulan.sourceforge.net/datasets-mlc.html
+flags
+options(utiml.base.algorithm = "RF", utiml.cores=8) # The utiml package uses the option function to customize some default parameters
+# The toyml dataset was used in the examples illustrated in this section. 
+# As toyml has two irrelevant attributes ("iatt8" and "iatt9") and one redundant ("ratt10") attribute, the pre-processing
+# remove_attributes function can be applied to remove them.
+toyml
+remove_attributes(toyml, c("iatt8", "iatt9", "ratt10")) -> new.toyml
+new.toyml
+# This example shows a MLC experiment using holdout, in which 70% of the dataset instances are used for training and 30% for test. 
+# A BR model that uses “Random Forest” as a base algorithm is induced and applied to the test instances. 
+# Next, predictions are assessed using MLC evaluation measures.
+set.seed(123)
+create_holdout_partition(new.toyml, c(train=0.7, test=0.3)) -> ds
+br(ds$train, "RF", cores = 1) -> model
+model
+predict(model, ds$test, cores = 1) -> predictions
+head(predictions)
+# The as.bipartition and as.ranking functions can be used to change, respectively, 
+# the probability/score to a bipartition matrix or the raking values, as illustrated next. 
+# Optionally, a threshold function can be applied to change the bipartitions.
+head(as.bipartition(predictions))
+head(as.ranking(predictions))
+head(mcut_threshold(predictions))
+multilabel_evaluate(ds$test, predictions, c("example-based", "macro-F1")) -> results
+round(results, 4)
+# A MLC baseline can be included among the strategies being experimentally compared. 
+# In the following code, the general baseline (Metz et al., 2012) is induced. 
+# A subtle difference is observed in "hamming-loss" and "F1" measures in favor of the BR model. 
+# The small number of labels are due to very common combinations of them found in toyml favors the general baseline.
+predict(baseline(ds$train, "general"), ds$test) -> base.preds
+multilabel_evaluate(ds$test, base.preds, c("hamming-loss", "F1")) -> base.res
+base.res
+round(base.res, 4)
+# Three different ECC models are created in the following code to illustrate the use of different parameters and base algorithms. 
+# Each model uses a specific base algorithm and configuration, which, 
+# consequently, results in different models for the same data and MLC strategy.
+# Using KNN with k = 5 and changing ECC parameters
+p_load(kknn)
+ecc(ds$train, "KNN", m=7, subsample=0.8, k=5, cores = 1) -> model1
+model1
+# Using C5.0 and changing ECC parameters
+p_load(C50)
+ecc(ds$train, "C5.0", subsample=0.6, attr.space=1, cores = 1) -> model2
+model2
+# Using SVM with cost = 10 and gamma = 0.5 and default ECC parameters
+ecc(ds$train, "SVM", cost=10, gamma=0.5, cores = 1) -> model3
+model3
+# By default, the create_holdout_partition function creates two random partitions (train and test) 
+# with 70% and 30% of the dataset instances, respectively. 
+# The number of partitions, sizes and sampling method can be modified. 
+# The following code shows how to create three, label-stratified partitions,
+# named "train", "test", and "val" with 70%, 20%, and 10% of the instances, respectively. 
+# The "val" partition can be used in a validation step for model selection or hyperparameter tuning.
+c(train=0.7, test=0.2, val=0.1) -> partitions
+create_holdout_partition(new.toyml, partitions, "iterative") -> strat
+# Training and test example experiment using k-fold cross validation
+# Defining the evaluation measures
+c("hamming-loss", "subset-accuracy", "one-error") -> measures
+# Running 10-fold cross validation
+cv(new.toyml, method="rakel", base.algorith="SVM", cv.folds=10, cv.sampling="stratified", cv.measures=measures, cv.seed=123) -> results
+round(results, 4)
+# To obtain detailed results by folds and/or labels, the hyperparameter cv.results=TRUE can be set.
+# In this case, a list is returned where the multi-label and labels’ results can be obtained as illustrated in the next example.
+cv(new.toyml, method="rakel", base.algorith="SVM", cv.results=TRUE, cv.sampling="stratified", cv.measures=measures, cv.seed=123) -> results
+t(results$multilabel)
+round(sapply(results$labels, colMeans), 4)
+# Any MLC strategy can be used in the cv method, as well as specific hyperparameters for them.
+# Additionally, the procedure can be parallelized, using cv.cores. 
+cv(new.toyml, method="ecc", base.algorith="RF", subsample=0.9, attr.space=0.9, cv.folds=5, cv.cores=4) -> results
+# Experiments with the food truck dataset
+# In order to show how the package can be used in a real world problem, this section illustrates the use
+# of the utiml to perform an exploratory analysis of the food truck dataset (Rivolli et al., 2017). 
+# First, the br strategy is evaluated with different ML base algorithms ("C5.0", "RF", "SVM" and "XGB") to identify
+# the algorithm that produces the best macro and micro-F1 results.
+c("macro-F1", "micro-F1") -> measures
+c("C5.0", "RF", "SVM", "XGB") -> algorithms
+sapply(algorithms, function(alg) {cv(foodtruck, "br", base.algorithm=alg, cv.measures=measures, cv.seed=1)}) -> res
+round(res, 4)
+# The following code shows that six labels (mexican_food, chinese_food, japanese_food, arabic_food, healthy_food and fitness_food) 
+# had no True Positive (TP) and False Positive (FP) predictions. 
+# Thus, for these labels, all instances were predicted as negative. 
+# This explains the difference observed between the macro and micro-F1 result, 
+# since the macro-F1 is the average labels’ F1, which is 0 for these labels.
+set.seed(1)
+create_holdout_partition(foodtruck, method="iterative") -> ds
+br(ds$train, "RF", cores = 1) -> model
+predict(model, ds$test, cores = 1) -> pred
+multilabel_confusion_matrix(ds$test, pred) -> cm
+# It must be observed that the cm object is a list containing several information about the prediction,
+# like the confusion matrix values summarized by instances and labels. 
+cm
+as.matrix(cm)
+# The next code summarizes the proportion of instances and the number of labels correctly predicted in the previous example. 
+# The results show that the BR model was not able to predict a correct label for almost 20% of the test instances; 
+# around 65% of the instances were correctly predicted with a single label; 
+# 12% were correctly predicted with 2 labels; 
+# and 3% were correctly predicted with 3 labels.
+prop.table(table(cm$TPi))
+
