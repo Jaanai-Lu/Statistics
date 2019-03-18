@@ -615,47 +615,56 @@ test <- read.csv("E:/r/Test_u94Q5KV.csv")
 > library(rpart.plot)
 > library(caret)
 #设置决策树的控制参数
-> fitControl <- trainControl(method = "cv", number = 5) #选用五折交叉验证的方法
+> fitControl <- trainControl(method = "cv", number = 5) #选用五折交叉验证的方法,cv为cross-validated
 > cartGrid <- expand.grid(.cp=(1:50)*0.01)
 #decision tree
 > tree_model <- train(Item_Outlet_Sales ~ ., data = new_train, method = "rpart", trControl = fitControl, tuneGrid = cartGrid)
 > print(tree_model)
-
-从上图可以看出，参数cp = 0.01所对应的RMSE最小，在此我们只提供了部分的数据，你可以在R consle中查询到更多信息。
+  从上图可以看出，参数cp = 0.01所对应的RMSE最小。
+#选择最优决策树模型
 main_tree <- rpart(Item_Outlet_Sales ~ ., data = new_train, control = rpart.control(cp=0.01)) #在cp=0.01下构造决策树
-prp(main_tree) #输出决策树
-
-以上就是我们决策树模型的结构，而且我们可以明显看出变量Item_MRP是最重要的根节点，作为最重要的变量也就是根节点，来划分预测未来的销售量。此外让我们检查一下这个模型的RMSE是否有所改善。
-> pre_score <- predict(main_tree, type = "vector")
+prp(main_tree) #绘制决策树
+  以上就是我们决策树模型的结构，而且我们可以明显看出变量Item_MRP是最重要的根节点，其作为最重要的变量也就是根节点，来划分预测未来的销售量。
+  此外让我们检查一下这个模型的RMSE是否有所改善。
+> pre_score <- predict(main_tree, type = "vector") #模型预测
 > rmse(new_train$Item_Outlet_Sales, pre_score)     #计算均方根误差
 [1] 1102.774
-可以看出，通过决策树做出的误差为1102.774，比线性回归得出的误差小。说明这种方法更优一些。当然你也可以通过调参数来进一步优化降低这个误差（如使用十折交叉验证的方法）
+  可以看出，通过决策树做出的误差为1102.774，比线性回归得出的误差小，说明这种方法更优一些。
+  当然你也可以通过调参数来进一步优化降低这个误差（如使用十折交叉验证的方法）。
 3、随机森林
-随机森林顾名思义，是用随机的方式建立一个森林，森林里面有很多的决策树组成，随机森林的每一棵决策树之间是没有关联的。在得到森林之后，当有一个新的输入样本进入的时候，就让森林中的每一棵决策树分别进行一下判断，看看这个样本应该属于哪一类（对于分类算法），然后看看哪一类被选择最多，就预测这个样本为那一类。随机森林算法可以很好的处理缺失值,异常值和其他非线性的数据，其他相关知识读者可以自行查阅。
+  随机森林，顾名思义，是用随机的方式建立一个森林，森林是由很多的决策树组成，随机森林里的每一棵决策树之间是没有关联的。
+  在得到森林之后，当有一个新的输入样本进入的时候，就让森林中的每一棵决策树分别进行一下判断，
+  看看这个样本应该属于哪一类（对于分类算法），然后看看哪一类被选择最多，就预测这个样本为那一类。
+  随机森林算法可以很好的处理缺失值,异常值和其他非线性的数据。
 #加载随机森林算法的包
 > library(randomForest)
 #设置参数
 > control <- trainControl(method = "cv", number = 5)
 #模型构建
-> rf_model <- train(Item_Outlet_Sa les ~ ., data = new_train, method = "parRF", trControl =  control, prox = TRUE, allowParallel = TRUE)
+> rf_model <- train(Item_Outlet_Sa les ~ ., data = new_train, method = "parRF", trControl = control, 
+  prox = TRUE, allowParallel = TRUE)
 #通过结果选择参数
 > print(rf_model)
-
-在以上的语句中，可以看到=“parRF”，这是随机森林的并行实现。这个包让你在计算随机森林时花费较短的时间。或者,你也可以尝试使用rf方法作为标准随机森林的功能。从以上结果中我们选择RMSE最小的即选择mtry = 15，我们尝试用1000棵树做计算，如下：
-> forest_model <- randomForest(Item_Outlet_Sales ~ ., data = new_train, mtry = 15, ntree = 1000)    #随机森林模型
+  在以上的语句中，可以看到“parRF”，这是随机森林的并行实现。
+  这个包让你在计算随机森林时花费较短的时间。
+  或者,你也可以尝试使用rf方法作为标准随机森林的功能。
+  从以上结果中我们选择RMSE最小的，即选择mtry = 15，我们尝试用1000棵树做计算，如下：
+> forest_model <- randomForest(Item_Outlet_Sales ~ ., data = new_train, mtry = 15, ntree = 1000) #随机森林模型
 > print(forest_model)
-> varImpPlot(forest_model)
-这个模型中可得出RMSE = 1132.04，并没有改进决策树模型。另外，随机森林的一个功能是可以展示重要变量。我们通过下图可以看到最重要的变量是Item_MRP(通过决策树算法也已经表示出来)。
-
-显然，这个模型可以进一步进行尝试调优参数的。同时,让我们用RMSE最好的决策树来对测试集做拟合。如下所示：
->main_predict <- predict(main_tree, newdata = new_test, type = "vector")
-> sub_file <- data.frame(Item_Identifier = test$Item_Identifier, Outlet_Identifier = test$Outlet_Identifier,  Item_Outlet_Sales = main_predict)
+  #这个模型中可得出RMSE = 1132.04，并没有改进决策树模型。
+> varImpPlot(forest_model) #查看变量重要性排序
+  另外，随机森林的一个功能是可以展示重要变量。
+  我们通过下图可以看到最重要的变量是Item_MRP(通过决策树算法也已经表示出来)。
+  显然，这个模型可以进一步进行尝试调优参数的。
+  同时,让我们用RMSE最好的决策树来对测试集做拟合。如下所示：
+> main_predict <- predict(main_tree, newdata = new_test, type = "vector")
+> sub_file <- data.frame(Item_Identifier = test$Item_Identifier, 
+  Outlet_Identifier = test$Outlet_Identifier, Item_Outlet_Sales = main_predict)
 > write.csv(sub_file, 'Decision_tree_sales.csv')
-当预测其他样本外数据,我们可以得出RMSE是1174.33，这个模型是也可以通过调参数达到更优的，以下列出几种方法：
- 本例我们没有使用标签编码和独热编码，希望你可以尝试以下编码来做随机森林模型。　
- 调整相关的参数。　　
- 使用Gradient Boosting来做模型。　
- 建立一个新的整体模型。
-大家有什么新的能使模型预测更优的方法都可以一起来讨论，期待与大家的思维的碰撞
+  当预测其他样本外数据,我们可以得出RMSE是1174.33，这个模型是也可以通过调参数达到更优的，以下列出几种方法：
+  本例我们没有使用标签编码和独热编码，希望你可以尝试以下编码来做随机森林模型；
+  调整相关的参数；
+  使用Gradient Boosting来做模型；
+  建立一个新的整体模型。
 
 
