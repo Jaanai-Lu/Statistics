@@ -637,7 +637,7 @@ prp(main_tree) #输出决策树
 #设置参数
 > control <- trainControl(method = "cv", number = 5)
 #模型构建
-> rf_model <- train(Item_Outlet_Sales ~ ., data = new_train, method = "parRF", trControl =  control, prox = TRUE, allowParallel = TRUE)
+> rf_model <- train(Item_Outlet_Sa les ~ ., data = new_train, method = "parRF", trControl =  control, prox = TRUE, allowParallel = TRUE)
 #通过结果选择参数
 > print(rf_model)
 
