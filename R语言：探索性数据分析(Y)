@@ -98,6 +98,37 @@ chart.Correlation(mydata, histogram=TRUE, pch=19)
 ##heatmap()
 colorRampPalette(c("blue", "white", "red"))(20) -> col #调用颜色版自定义颜色
 heatmap(x = res, col = col, symm = TRUE) #symm表示是否对称
+常用的衡量随机变量相关性的方法主要有三种：
+pearson积矩相关系数；用于衡量两个连续性随机变量间的相关系数。
+spearman秩相关系数；用于衡量分类定序变量（等级变量）间的相关程度。
+kendall相关系数；即肯德尔相关系数，也是一种秩相关系数，不过它所计算的对象是分类变量。
+Kendall相关系数是对于定类变量的统计，pearson是对定距变量的统计，而spearman是对定序变量的统计
+提醒：相关性的测量是基于数据的，就是两变量都是数据才能计算其相关性。如性别先自行转换成数值比如0和1，再进行计算。
+R语言：
+cor
+cor.test
+corrplot
+cor(x, y=NULL, use="everything", method= c("pearson", "kendall", "spearman"))
+在R语言中，通常使用cor函数进行相关系数分析，可以分别指定向量，也可以指定给cor函数一个数据框。
+use函数指定处理缺失值的方式，
+method是可选的三种相关系数计算方法。
+这里以diamonds数据集为例：
+library("ggplot2")
+str(diamonds)
+cor(diamonds[, c("carat", "depth", "price")])
+cor(diamonds[, c("carat", "depth", "price")], method= "pearson") #默认情况下使用的是pearson相关系数。
+corrplot函数可以针对相关系数输出的结果进行可视化：
+library("corrplot")
+library("dplyr")
+cor(diamonds[, c("carat", "depth", "price")]) %>% corrplot()
+使用cor.test函数进行相关性的检验：
+cor.test(x， y, alternative = c("two.sided", "less", "greater"), method = c("pearson", "kendall", "spearman"), 
+exact = NULL, conf.level = 0.95, continuity = FALSE, ...)
+cor.test(diamonds$carat, diamonds$depth)
+cor.test(~ carat + depth, diamonds)
+以上写法都是支持的。
+从结果可以看到，两者几乎不相关，pearson相关系数仅有0.02左右。
+
 # 经典的离群点检测法，是箱线图判断离群点的方法（统计学上称为Tukey’s fences），这是基于单变量的。
 # 这个方法大家可以在维基查询到，网址为https://en.wikipedia.org/wiki/Outlier。
 # 很多R包默认的方法都是基于这个规则的，并可以自动删除、替代、设为缺失值。 
