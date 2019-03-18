@@ -1,0 +1,124 @@
+ROC标准只适用于二分类。
+一个二分类问题实质上就是灵敏度和准确度之间的权衡。
+Sensitivity:正确预测到的正例数/实际正例总数,即b/(c+d)，也叫做召回率;
+Specificity:正确预测到的负例数/实际负例总数,即a/(a+b)。
+ROC曲线就是根据这两个指标值绘制出来的，其中x轴为1-Specificity（即FPR准确度，即负类被预测为正类的概率)，y轴为Sensitivity。
+注：False Positive Rate(FPR，假正率) = FP/[FP + TN]，FPR代表预测为正但实际为负占总负实例的比例。
+通过比较ROC曲线与45°直线可以直观的反映模型的好坏，但并不能从定量的角度反馈模型好是好到什么程度或模型差是差到什么程度。
+那么就引申出了AUC的概念，AUC代表一个模型区分正例和负例的能力，即ROC曲线下的面积,显然这个面积的值不会大于1。
+又由于ROC曲线一般都处于y=x这条直线的上方，所以AUC的取值范围在0.5和1之间。
+值为1.0的面积代表一个预测完全正确的模型，而值为0.5的面积代表模型的预测表现和随机一样。
+当曲线偏离45°直线越远，则AUC越大，模型相应就会越好。一般认为AUC在0.75以上，模型就可以接受了。
+
+这里将描述如何在CRAN中搜索绘制ROC曲线的包，并强调六个有用的包。
+用pkgsearch来搜索CRAN。
+package_search()函数的作用是:将文本字符串作为输入，并使用基本的文本挖掘技术搜索所有CRAN。
+该算法搜索包文本字段，并为它找到的每个包生成一个分数，该分数由反向依赖项和下载的数量加权。
+library(tidyverse)  # for data manipulation
+library(dlstats)    # for package download stats
+library(pkgsearch)  # for searching packages
+使用以下查询，其中包括一些有趣的与roc相关的包。
+rocPkg <- pkg_search(query="ROC",size=200)
+然后，通过过滤掉孤立包和得分不超过190的包，我将rocPkg缩小到46个包。
+rocPkgShort <- rocPkg %>% 
+               filter(maintainer_name != "ORPHANED", score > 190) %>%
+               select(score, package, downloads_last_month) %>%
+               arrange(desc(downloads_last_month))
+head(rocPkgShort)
+为了完成选择过程，我做了大量的工作，浏览了软件包的文档，从中挑选出我认为对大多数数据科学家通常有用的东西。
+下面的图使用Guangchuang Yu的dlstats包查看我选择配置的六个包的下载历史。
+library(dlstats)
+shortList <- c("pROC","precrec","ROCit", "PRROC","ROCR","plotROC")
+downloads <- cran_stats(shortList)
+ggplot(downloads, aes(end, downloads, group=package, color=package)) +
+  geom_line() + geom_point(aes(shape=package)) +
+  scale_y_continuous(trans = 'log2')
+ROCR - 2005
+ROCR已经存在了近14年，是绘制ROC曲线的一个坚如磐石的工具。
+我特别喜欢performance()函数通过输入真阳性率tpr和假阳性率fpr和参数来设置曲线的计算方法。
+这不仅具有令人放心的透明性，还显示了通过输入适当的参数来计算二分类器的几乎所有性能度量的灵活性。
+例如，要生成precision-recall曲线，您需要输入prec和rec。虽然没有vignette，但包的文档非常好。
+下面的代码使用包附带的合成数据集并绘制默认的ROCR-ROC曲线。在本文中，我将使用相同的数据集。
+library(ROCR)
+## Loading required package: gplots
+## 
+## Attaching package: 'gplots'
+## The following object is masked from 'package:stats':
+## 
+##     lowess
+# plot a ROC curve for a single prediction run
+# and color the curve according to cutoff.
+data(ROCR.simple)
+data.frame(ROCR.simple) -> df
+prediction(df$predictions, df$labels) -> pred
+performance(pred,"tpr","fpr") -> perf
+plot(perf,colorize=TRUE)
+pROC - 2010
+从下载曲线可以明显看出，pROC也很受数据科学家的欢迎。我喜欢它是因为很容易得到AUC的置信区间。
+library(pROC)
+## Type 'citation("pROC")' for a citation.
+## 
+## Attaching package: 'pROC'
+## The following objects are masked from 'package:stats':
+## 
+##     cov, smooth, var
+pROC_obj <- roc(df$labels, df$predictions, smoothed = TRUE, ci = TRUE, 
+  ci.alpha = 0.9, stratified = FALSE, plot = TRUE, auc.polygon = TRUE, 
+  max.auc.polygon = TRUE, grid=TRUE, print.auc=TRUE, show.thres = TRUE)
+sens.ci <- ci.se(pROC_obj)
+plot(sens.ci, type="shape", col="lightblue")
+## Warning in plot.ci.se(sens.ci, type = "shape", col = "lightblue"): Low
+## definition shape.
+plot(sens.ci, type="bars")
+PRROC - 2014
+虽然不像ROCR和pROC那么受欢迎，但PRROC最近似乎又卷土重来了。
+输入的术语有点折衷，但是一旦您理解了ROC.curve()函数，就可以轻松地绘制出一条干净的ROC曲线。
+正如vignette所指示，PRROC的创建实际上是为了做precision-recall曲线。
+library(PRROC)
+PRROC_obj <- roc.curve(scores.class0 = df$predictions, weights.class0=df$labels, curve=TRUE)
+plot(PRROC_obj)
+
+plotROC - 2014
+
+plotROC是使用ggplot()绘制ROC曲线的理想选择。我的猜测是，它似乎只受到有限的欢迎，因为文档使用了医学术语，如“疾病状态”和“标记”。尽管如此，文档(包括a vignette and a Shiny application)非常好。
+
+该包提供了许多功能丰富的ggplot()几何，可以生成复杂的图形。下面的图包含一些样式，包括Clopper和Pearson(1934)精确的方法置信区间。
+
+1library(plotROC)
+2rocplot <- ggplot(df, aes(m = predictions, d = labels))+ geom_roc(n.cuts=20,labels=FALSE)
+3rocplot + style_roc(theme = theme_grey) + geom_rocci(fill="pink") 
+4
+
+precrec - 2015
+
+precrec是另一个绘制ROC和precision-recall曲线的库。
+
+1library(precrec)
+2## 
+3## Attaching package: 'precrec'
+4## The following object is masked from 'package:pROC':
+5## 
+6##     auc
+7precrec_obj <- evalmod(scores = df$predictions, labels = df$labels)
+8autoplot(precrec_obj)
+
+evalmod()函数的参数选项使生成各种模型特性的基本图变得很容易。
+
+1precrec_obj2 <- evalmod(scores = df$predictions, labels = df$labels, mode="basic")
+2autoplot(precrec_obj2)   
+
+ROCit - 2019
+
+ROCit是一种用于绘制ROC曲线和其他二元分类可视化的新工具，它在1月份迅速蹿红，并继续流行。如果我通过下载自动过滤原始搜索，就永远不会发现它。默认的图包括Yourden’s J Statistic数据的位置。
+
+1library(ROCit)
+2## Warning: package 'ROCit' was built under R version 3.5.2
+3ROCit_obj <- rocit(score=df$predictions,class=df$labels)
+4plot(ROCit_obj)
+
+其他一些可视化是可能的。下图显示了正面和负面反应的累积密度。KS统计量显示了两条曲线之间的最大距离。
+
+1ksplot(ROCit_obj)
+
+在本文中，我试图深入研究CRAN并揭示R所包含的用于绘制ROC曲线和其他二进制分类器可视化的一些资源，但我只触及了皮毛。此外，我故意忽略了许多用于特殊应用程序的包，例如从审查生存数据计算时间相关的ROC曲线的survivalROC，以及包含评估交叉验证的AUC措施的功能的cvAUC。不过，我希望这个小练习能帮助您找到您要找的东西。
+
