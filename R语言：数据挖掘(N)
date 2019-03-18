@@ -262,3 +262,400 @@ while(Age < 17){
   建模学习/机器学习
   对于模型学习，caret包强大到足以满足大多创建机器学习模型的需要。当然,你也可以安装算法包，例如随机森林，决策树等。
 到这里为止，你会觉得对于R的相关组件都相对熟悉了，从现在开始我们开始介绍一些关于模型预测的知识。
+三、用R进行数据预处理
+  从这一节开始,我们将深入预测建模的不同阶段。
+  对于数据的预处理是非常重要的，这一阶段学习将强化我们的对数据操作的应用。
+  这里我们以一个大市场销售预测数据集为例。
+  首先，需要先理解一下数据结构。
+1、数据集中基础概念
+○1最后一列ItemOutlet_Sales为响应变量（因变量y），是我们需要做出预测的。前面的变量是自变量xi，是用来预测因变量的。
+○2数据集
+  预测模型一般是通过训练数据集建立，训练数据总是包括因变量；
+  测试数据:一旦模型构建,它在测试数据集中的测试是较为准确的，这个数据总是比训练数据集包含更少数量的观察值，而且它是不包括反应变量的。
+  数据的导入和基本探索
+○1在使用R语言时一个重要设置是定义工作目录，即设置当前运行路径（这样你的全部数据和程序都将保存在该目录下）
+#设定当前工作目录
+setwd(“E:/r”)
+  一旦设置了目录,我们可以很容易地导入数据，使用下面的命令导入csv文件：
+#载入数据集
+train <- read.csv("E:/r/Train_UWu5bXk.csv")
+test <- read.csv("E:/r/Test_u94Q5KV.csv")
+  通过R环境检查数据是否已成功加载,然后让我们来探讨数据：
+#查看数据的维度
+> dim(train)
+[1] 8523 12
+> dim(test)
+[1] 5681 11
+  从结果我们可以看到训练集有8523行12列数据，测试集有5681行和11列训练数据,并且这也是正确的。测试数据应该总是少一列的。
+  现在让我们深入探索训练数据集：
+#检查训练集中的变量和类型
+> str(train)
+'data.frame': 8523 obs. of 12 variables:
+$ Item_Identifier : Factor w/ 1559 levels "DRA12","DRA24",..: 157 9 663 1122 1298 759 697 739 441 991 ...
+$ Item_Weight : num 9.3 5.92 17.5 19.2 8.93 ...
+$ Item_Fat_Content : Factor w/ 5 levels "LF","low fat",..: 3 5 3 5 3 5 5 3 5 5 ...
+$ Item_Visibility : num 0.016 0.0193 0.0168 0 0 ...
+$ Item_Type : Factor w/ 16 levels "Baking Goods",..: 5 15 11 7 10 1 14 14 6 6 ...
+$ Item_MRP : num 249.8 48.3 141.6 182.1 53.9 ...
+$ Outlet_Identifier : Factor w/ 10 levels "OUT010","OUT013",..: 10 4 10 1 2 4 2 6 8 3 ...
+$ Outlet_Establishment_Year: int 1999 2009 1999 1998 1987 2009 1987 1985 2002 2007 ...
+$ Outlet_Size : Factor w/ 4 levels "","High","Medium",..: 3 3 3 1 2 3 2 3 1 1 ...
+$ Outlet_Location_Type : Factor w/ 3 levels "Tier 1","Tier 2",..: 1 3 1 3 3 3 3 3 2 2 ...
+$ Outlet_Type : Factor w/ 4 levels "Grocery Store",..: 2 3 2 1 2 3 2 4 2 2 ...
+$ Item_Outlet_Sales : num 3735 443 2097 732 995 ...
+2、图形表示
+  当使用图表来表示时，会更好的了解这些变量。
+  一般来讲,我们可以从两个方面分析数据:单变量分析和双变量分析。
+  单变量分析较为简单，在此不做解释。这里以双变量分析为例：（对于可视化,我们将使用ggplot2包。这些图可以帮助我们更好理解变量的分布和频率）
+  首先做出Item_Visibility和Item_Outlet_Sales两个变量的散点图：
+ggplot(train, aes(x = Item_Visibility, y = Item_Outlet_Sales)) 
+  + geom_point(size = 2.5, color="navy") + xlab("Item Visibility") + ylab("Item Outlet Sales") 
+  + ggtitle("Item Visibility vs Item Outlet Sales")
+  从图中，我们可以看到大多数销售的产品能见度小于0.2。这表明item_visibility < 0.2，则该变量必须是确定销售的一个重要因素。
+  做出Outlet_Identifier和Item_Outlet_Sales两个变量的柱状关系图
+ggplot(train, aes(Outlet_Identifier, Item_Outlet_Sales)) 
+  + geom_bar(stat = "identity", color = "purple") 
+  + theme(axis.text.x = element_text(angle = 70, vjust = 0.5, color = "black"))  
+  + ggtitle("Outlets vs Total Sales") 
+  + theme_bw()
+  在这里,我们推断可能是OUT027的销量影响，OUT35的销量紧随其后。OUT10和OUT19可能是由于最少的客流量,从而导致最少的出口销售。
+  做出Outlet_type和Item_Outlet_Sales两个变量的箱体图
+ggplot(train, aes(Item_Type, Item_Outlet_Sales)) 
+  + geom_bar( stat = "identity") 
+  + theme(axis.text.x = element_text(angle = 70, vjust = 0.5, color = "navy"))
+  从这个图表,我们可以推断出水果和蔬菜最有利于销售零食数量的出口，其次是家用产品。
+  做出Item_Type和Item_MRP两个变量的箱线图
+  这次我们使用箱线图来表示，箱线图的好处在于我们可以看到相应变量的异常值和平均偏差水平。
+ggplot(train, aes(Item_Type, Item_MRP)) 
+  + geom_boxplot() 
+  + ggtitle("Box Plot") 
+  + theme(axis.text.x = element_text(angle = 70, vjust = 0.5, color = "red")) 
+  + xlab("Item Type") + ylab("Item MRP") 
+  + ggtitle("Item Type vs Item MRP")
+  在图中,黑色的点就是一个异常值，盒子里黑色的线是每个项目类型的平均值。
+3、缺失值处理
+  缺失值对于自变量和因变量之间的关系有很大的影响。
+  让我们来做一些快速的数据探索。首先,我们将检查数据是否有缺失值。
+> table(is.na(train))
+FALSE TRUE 
+100813 1463
+  我们可以看出在训练数据集中有1463个缺失值。
+  检查这些缺失值的变量在哪里，其实很多数据科学家一再建议初学者在在数据探索阶段应密切关注缺失值。
+> colSums(is.na(train))
+Item_Identifier Item_Weight 
+0                1463 
+Item_Fat_Content Item_Visibility 
+0                 0 
+Item_Type         Item_MRP 
+0                 0 
+Outlet_Identifier Outlet_Establishment_Year 
+0                 0 
+Outlet_Size       Outlet_Location_Type 
+0                 0 
+Outlet_Type       Item_Outlet_Sales 
+0                 0
+  因此,我们看到Item_Weight列有1463个缺失的数据。
+  从这个数据我们还可以得到更多的推论：
+> summary(train)
+  我们可以看到每列的最小值，最大值，中位数，平均值，缺失值的信息等。
+  我们看到变量Item_Weight中有缺失值，而且Item_Weight是一个连续变量。
+  因此,在这种情况下,我们一般用样本中变量的均值或中位数赋值给缺失值。
+  计算变量item_weight的均值和中位数，这是最常用处理缺失值的的方法，其他的方法在此不赘述。　　
+  我们可以先把两个数据集合并，这样就不需要独立编写编码训练和测试数据集，这也会节省我们的计算时间。
+  但是合并结合两个数据框，我们必须确保他们相同的列，而：
+> dim(train)
+[1] 8523 12
+> dim(test)
+[1] 5681 11
+  我们知道，测试数据集少一列因变量。
+  首先来添加列，我们可以给这个列赋任何值。
+  一个直观的方法是我们可以从训练数据集中提取销售的平均值，并使用Item_Outlet_Sales作为测试变量的销售列。
+  不过，在此,我们让它简单化，给最后一列赋值为1。
+test$Item_Outlet_Sales <- 1
+> combi <- rbind(train, test)
+  接下来我们先来计算中位数，选用中位数是因为它在离散值中很有代表性。
+combi$Item_Weight[is.na(combi$Item_Weight)] <- median(combi$Item_Weight, na.rm = TRUE)
+> table(is.na(combi$Item_Weight))
+FALSE 
+14204
+4、连续变量和分类变量的处理
+  在数据处理中，对连续数据集和分类变量的分别处理是非常重要的。
+  在这个数据集,我们只有3个连续变量，其他的是分类变量。
+  如果你仍然感到困惑，建议你再次使用str()查看数据集。
+  对于变量Item_Visibility，在上面的图中可以看到该项中有的能见度为零值,这几乎是不可行的。
+  因此,我们考虑将它看成缺失值，用中位数来处理。
+> combi$Item_Visibility <- ifelse(combi$Item_Visibility == 0, median(combi$Item_Visibility)）
+  现在处理分类变量。在初步的数据探索中,我们看到有错误的水平变量需要纠正。
+levels(combi$Outlet_Size)[1] <- "Other"
+> library(plyr)
+#将源数据中“LF”重命名为“Low Fat”
+> combi$Item_Fat_Content <- revalue(Combi$Item_Fat_Content,c("LF" = "Low Fat", "reg" = "Regular"))   
+ #将源数据中“low fat”重命名为“Low Fat”
+ >combi$Item_Fat_Content <- revalue(Combi$Item_Fat_Content, c("low fat" = "Low Fat"))                            
+> table(combi$Item_Fat_Content)     #计算各水平下的频数
+  Low Fat Regular 
+  9185    5019
+  使用上面的命令,我们指定名称“Other”为其他未命名的变量，简要划分了Item_Fat_Content的等级。
+5、特征值变量计算
+  现在我们已经进入了大数据时代，很多时候需要大量的数据算法计算，但是之前所选出的变量不一定会和模型拟合的效果很好。
+  所以我们需要提取新的变量，提供尽可能多的“新”的信息来帮助模型做出更准确的预测。
+  以合并后的数据集为例，你觉得哪些因素可能会影响Item_Outlet_Sales？
+  关于商店种类变量计算
+  在源数据中有10个不同的门店，门店的数目越多，说明某种商品更容易在这个商店中售出。
+> library(dplyr)
+> a <- combi %>% group_by(Outlet_Identifier) %>% tally()  #用管道函数对门店按编码分类计数
+  注：管道函数的思路：将左边的值管道输出为右边调用的函数的第一个参数。
+> head(a)
+Source: local data frame [6 x 2] 
+Outlet_Identifier n
+  (fctr)        (int)
+1 OUT010         925
+2 OUT013         1553
+3 OUT017         1543
+4 OUT018         1546
+5 OUT019         880
+6 OUT027         1559
+> names(a)[2] <- "Outlet_Count"
+> combi <- full_join(a, combi, by = "Outlet_Identifier")
+  商品种类计算
+  同样的,我们也可以计算商品种类的信息，这样我们可以通过结果看到商品在各家商店出现的频率。
+> b <- combi %>%
+   group_by(Item_Identifier) %>%
+   tally()
+> names(b)[2] <- "Item_Count"
+> b
+Item_Identifier   Item_Count            #数量较多不一一列举
+Source: local data frame [1,559 x 2]
+   Item_Identifier Item_Count
+            (fctr)      (int)
+1            DRA12          9
+2            DRA24         10
+3            DRA59         10
+4            DRB01          8
+5            DRB13          9
+6            DRB24          8
+7            DRB25         10
+8            DRB48          9
+9            DRC01          9
+10           DRC12          8
+..             ...        ...
+> combi <- merge(b, combi, by = “Item_Identifier”)
+  商店的成立时间的变量探索
+  我们假设商店的成立时间越久，该商店的客流量和产品销量越会越多。
+> c <- combi %>%
+  select(Outlet_Establishment_Year) %>% 
+   mutate(Outlet_Year = 2013 - combi$Outlet_Establishment_Year)
+   #注：mutate函数，是对已有列进行数据运算并添加为新列。
+ > head(c)
+Outlet_Establishment_Year  Outlet_Year
+1 1999                       14
+2 2009                        4
+3 1999                       14
+4 1998                       15
+5 1987                       26
+6 2009                        4
+> combi <- full_join(c, combi)
+以第一个年份为例，这表明机构成立于1999年，已有14年的历史（以2013年为截止年份）。
+  商品所属类型的相关计算
+　通过对商品所属类型的计算，我们可以从其中发现人们的消费趋势。
+  从数据中可以看出仔细看商品标注DR的，大多是可以吃的食物。对于FD，大多是属于饮品类的。
+  同样地我们注意到NC类，可能是生活用品（非消耗品），但是NC类中的所标注较为复杂。
+  于是，我们将把这些变量提取出来，并放到一个新变量中。
+  在这里我将使用substr()和gsub()函数来实现提取和重命名变量。
+> q <- substr(combi$Item_Identifier, 1, 2)      #字符中的特征值识别为FD和DR
+> q <- gsub("FD","Food", q)                     #将数据中FD标记为Food
+> q <- gsub("DR","Drinks", q)                   #将数据中DR标记为Drinks
+> q <- gsub("NC","Non-Consumable", q)            #将数据中NC标Non-Consumable
+> table(q)
+   Drinks Food  Non-Consumable 
+   1317   10201 2686
+> combi$Item_Type_New <- q    #将处理过的变量类型命名为Item_Type_New
+  当然，你也可以试着去增加一些新变量帮助构建更好的模型，但是，增加新变量时必须使它与其他的变量之间是不相关的。
+  如果你不确定与其他变量之间是否存在相关关系，可以通过函数cor（）来进行判断。
+  对字符变量进行编码
+○1标签编码
+  这一部分的任务是将字符型的标签进行编码。
+  例如在我们的数据集中,变量Item_Fat_Content有2个级别即低脂肪和常规，
+  我们将低脂编码为0，常规型编码为1。
+  因为这样能够帮助我们进行定量的分析。 
+  我们可以通过ifelse语句来实现：
+> combi$Item_Fat_Content <- ifelse(combi$Item_Fat_Content == "Regular",1,0)  #将低脂编码为0，常规型编码为1
+○2独热编码
+  独热编码即One-Hot编码，又称一位有效编码，
+  其方法是使用N位状态寄存器来对N个状态进行编码，每个状态都有其独立的寄存器位，并且在任意时候，其中只有一位有效。
+  例如：变量Outlet_ Location_Type有三个层次，在独热编码中,将创建三个不同变量1和0组成。1将代表变量存在,0代表变量不存在。如下：:
+> sample <- select(combi, Outlet_Location_Type)
+> demo_sample <- data.frame(model.matrix(~ . -1, sample))
+> head(demo_sample)
+Outlet_Location_TypeTier.1   Outlet_Location_TypeTier.2   Outlet_Location_TypeTier.3
+1             1                         0                        0
+2             0                         0                        1
+3             1                         0                        0
+4             0                         0                        1
+5             0                         0                        1
+6             0                         0                        1
+  这是一个独热编码的示范。现在将这种技术用于我们的数据集分类变量中(不含ID变量)。
+> library(dummies)
+> combi <- dummy.data.frame(combi, names = c('Outlet_Size','Outlet_Location_Type','Outlet_Type', 'Item_Type_New'),  sep='_')
+  以上，我们介绍了两种不同方法在R中去做独热编码，我们可以检查一下编码是否已经完成：
+> str (combi)
+$ Outlet_Size_Other : int 0 1 1 0 1 0 0 0 0 0 ...
+$ Outlet_Size_High : int 0 0 0 1 0 0 0 0 0 0 ...
+$ Outlet_Size_Medium : int 1 0 0 0 0 0 1 1 0 1 ...
+$ Outlet_Size_Small : int 0 0 0 0 0 1 0 0 1 0 ...
+$ Outlet_Location_Type_Tier 1 : int 1 0 0 0 0 0 0 0 1 0 ...
+$ Outlet_Location_Type_Tier 2 : int 0 1 0 0 1 1 0 0 0 0 ...
+$ Outlet_Location_Type_Tier 3 : int 0 0 1 1 0 0 1 1 0 1 ...
+$ Outlet_Type_Grocery Store : int 0 0 1 0 0 0 0 0 0 0 ...
+$ Outlet_Type_Supermarket Type1: int 1 1 0 1 1 1 0 0 1 0 ...
+$ Outlet_Type_Supermarket Type2: int 0 0 0 0 0 0 0 1 0 0 ...
+$ Outlet_Type_Supermarket Type3: int 0 0 0 0 0 0 1 0 0 1 ...
+$ Item_Outlet_Sales : num 1 3829 284 2553 2553 ...
+$ Year : num 14 11 15 26 6 9 28 4 16 28 ...
+$ Item_Type_New_Drinks : int 1 1 1 1 1 1 1 1 1 1 ...
+$ Item_Type_New_Food : int 0 0 0 0 0 0 0 0 0 0 ...
+$ Item_Type_New_Non-Consumable : int 0 0 0 0 0 0 0 0 0 0 ...
+  我们可以看出独热编码之后，之前的变量已经自动被移除了数据集。
+四、用机器学习方法进行预测建模
+  在进行构造数据模型前，我们将删除之前已经被转换过的原始变量，可以通过使用dplyr包中的select（）实现，如下：
+> combi <- select(combi, -c(Item_Identifier, Item_Fat_Content ，Outlet_Identifier,, Outlet_Establishment_Year,Item_Type))
+> str(combi)
+  在本节中,我将介绍回归、决策树和随机森林等算法。
+  这些算法的详细解释已经超出了本文的范围。
+  现在我们要将两个数据集分开，以便我们来进行预测建模。如下：
+> new_train <- combi[1:nrow(train),]
+> new_test <- combi[-(1:nrow(train)),]
+1、多元线性回归
+  使用多元回归建模时，一般用于响应变量（因变量）是连续型和可供预测变量有很多时。
+  如果因变量被分类,一般会使用逻辑回归。
+  在做回归前，先来了解一些回归的基本假设：
+  在响应变量和自变量之间存在某种线性关系；　
+  各个自变量之间是不相关的，如果存在相关关系，我们称这个模型出现了多重共线性；
+  误差项也是要求不相关的。否则,它将导致模型出现自相关；
+  误差项必须有恒定方差。否则,它将导致模型出现异方差性。
+  在R中我们使用lm()函数来做回归，如下：
+> linear_model <- lm(Item_Outlet_Sales ~ ., data = new_train)  #构建模型
+> summary(linear_model)
+  调整后的R²可以很好的衡量一个回归模型的拟合优度。R²越高说明模型拟合的越好。
+  从上图可以看出adjusted R²= 0.2084。这意味着我们拟合的这个模型很不理想。
+  而且可以从p值看出这些新变量，例如Item count, Outlet Count 和 Item_Type_New对于我们的模型构造而言并没有什么帮助，
+  因为它们的sign.远小于0.05的显著性水平。
+  对模型重要的变量是p值小于0.05的变量，也就是上图中后面带有*的变量。
+  另外，我们知道变量之间存在相关性，会影响模型的准确性，我们可以利用cor()函数来看一下各变量之间的相关关系。如下：
+cor(new_train)
+  另外,还可以使用corrplot包来做相关系数，如下的程序就帮助我们找到一个共线性很强的两个变量。
+cor(new_train$Outlet_Count, new_train$`Outlet_Type_Grocery Store`)
+[1] -0.9991203
+  可以看出变量Outlet_Count与变量Outlet_Type_Grocery Store成高度负相关关系。
+  另外，我们通过刚才的分析发现了模型中的一些问题：
+  模型中有相关关系的变量存在；　　
+  我们做了独热编码编码和标签编码，但从结果来看，通过创建虚拟变量对于这个线性回归模型的创建意义不大；
+  创建的新变量对于回归模型的拟合也没有很大影响。
+  接下来，我们尝试创建不含编码和新变量的回归模型。如下：
+#载入数据
+train <- read.csv("E:/r/Train_UWu5bXk.csv")
+test <- read.csv("E:/r/Test_u94Q5KV.csv")
+> test$Item_Outlet_Sales <- 1   #给测试样本中的响应变量赋值
+#合并训练集和测试集
+> combi <- rbind(train, test)
+#impute missing value in Item_Weight
+> combi$Item_Weight[is.na(combi$Item_Weight)] <- median(combi$Item_Weight, na.rm = TRUE)
+#用中位数处理缺失值
+> combi$Item_Visibility <- ifelse(combi$Item_Visibility == 0, median(combi$Item_Visibility))
+#给变量 Outlet_Size整理等级水平
+> levels(combi$Outlet_Size)[1] <- "Other"
+#给变量Item_Fat_Content重命名
+> library(plyr)
+> combi$Item_Fat_Content <- revalue(combi$Item_Fat_Content,c("LF" = "Low Fat", "reg" ="Regular"))
+> combi$Item_Fat_Content <- revalue(combi$Item_Fat_Content, c("low fat" = "Low Fat"))
+#创建一个新列
+> combi$Year <- 2013 - combi$Outlet_Establishment_Year
+#删除模型中不需要的变量
+> library(dplyr)
+> combi <- select(combi, -c(Item_Identifier, Outlet_Identifier, Outlet_Establishment_Year))
+#拆分数据集
+> new_train <- combi[1:nrow(train),]
+> new_test <- combi[-(1:nrow(train)),]
+#线性回归
+> linear_model <- lm(Item_Outlet_Sales ~ ., data = new_train)
+> summary(linear_model)
+  上图中可以看到，调整后的R²= 0.5623。
+  这告诉我们,有时只需你的计算过程简单一些可能会得到更精确的结果。
+  让我们从一些回归图中去发现一些能够提高模型精度的办法。
+> par(mfrow=c(2, 2))
+> plot(linear_model)
+  从左上的第一个残差拟合图中我们可以看出实际值与预测值之间残差不是恒定的，这说明该模型中存在着异方差。
+  解决异方差性的一个常见的做法就是对响应变量取对数（减少误差）。
+> linear_model <- lm(log(Item_Outlet_Sales) ~ ., data = new_train)
+> summary(linear_model)
+  可以看出调整后的R²= 0.72，说明构建的模型有了显著的改善，我们可以再做一次拟合回归图。
+> par(mfrow=c(2,2))
+> plot(linear_model)
+  上图中，残差值与拟合值之间已经没有了长期趋势，说明该模型的拟合效果理想。
+  我们也经常用RMSE来衡量模型的好坏，并且我们可以通过这个值与其他算法相比较。如下：
+> install.packages("E:/r/ Metrics_0.1.1.zip ")
+> library(Metrics)
+> rmse(new_train$Item_Outlet_Sales, exp(linear_model$fitted.values))
+[1] 1140.004
+  接下来让我们利用决策树算法来改善我们的RMSE得分。
+2、决策树
+  决策树算法一般优于线性回归模型，在机器学习中决策树是一个预测模型。
+  它代表的是对象属性与对象值之间的一种映射关系。
+  树中每个节点表示某个对象，而每个分叉路径则代表的某个可能的属性值，而每个叶结点则对应从根节点到该叶节点所经历的路径所表示的对象的值。
+  在R中,决策树算法的实现可以使用rpart包。
+  此外,我们将使用caret包做交叉验证。
+  通过交叉验证技术来构建较复杂的模型时可以使模型不容易出现过度拟合的情况。
+  另外,决策树使用参数CP来衡量训练集的复杂性和准确性。
+  参数较小的CP值可能将导致更大的决策树,这也可能会出现过度拟合的模型。
+  相反,参数大的CP值也导致拟合不充分的模型，也就是我们不能准确的把握所需变量的信息。
+  以下我们选用五折交叉验证法来找出具有最优CP的模型。
+# 加载所需的包
+> library(rpart)
+> library(e1071)
+> library(rpart.plot)
+> library(caret)
+#设置决策树的控制参数
+> fitControl <- trainControl(method = "cv", number = 5) #选用五折交叉验证的方法
+> cartGrid <- expand.grid(.cp=(1:50)*0.01)
+#decision tree
+> tree_model <- train(Item_Outlet_Sales ~ ., data = new_train, method = "rpart", trControl = fitControl, tuneGrid = cartGrid)
+> print(tree_model)
+
+从上图可以看出，参数cp = 0.01所对应的RMSE最小，在此我们只提供了部分的数据，你可以在R consle中查询到更多信息。
+main_tree <- rpart(Item_Outlet_Sales ~ ., data = new_train, control = rpart.control(cp=0.01)) #在cp=0.01下构造决策树
+prp(main_tree) #输出决策树
+
+以上就是我们决策树模型的结构，而且我们可以明显看出变量Item_MRP是最重要的根节点，作为最重要的变量也就是根节点，来划分预测未来的销售量。此外让我们检查一下这个模型的RMSE是否有所改善。
+> pre_score <- predict(main_tree, type = "vector")
+> rmse(new_train$Item_Outlet_Sales, pre_score)     #计算均方根误差
+[1] 1102.774
+可以看出，通过决策树做出的误差为1102.774，比线性回归得出的误差小。说明这种方法更优一些。当然你也可以通过调参数来进一步优化降低这个误差（如使用十折交叉验证的方法）
+3、随机森林
+随机森林顾名思义，是用随机的方式建立一个森林，森林里面有很多的决策树组成，随机森林的每一棵决策树之间是没有关联的。在得到森林之后，当有一个新的输入样本进入的时候，就让森林中的每一棵决策树分别进行一下判断，看看这个样本应该属于哪一类（对于分类算法），然后看看哪一类被选择最多，就预测这个样本为那一类。随机森林算法可以很好的处理缺失值,异常值和其他非线性的数据，其他相关知识读者可以自行查阅。
+#加载随机森林算法的包
+> library(randomForest)
+#设置参数
+> control <- trainControl(method = "cv", number = 5)
+#模型构建
+> rf_model <- train(Item_Outlet_Sales ~ ., data = new_train, method = "parRF", trControl =  control, prox = TRUE, allowParallel = TRUE)
+#通过结果选择参数
+> print(rf_model)
+
+在以上的语句中，可以看到=“parRF”，这是随机森林的并行实现。这个包让你在计算随机森林时花费较短的时间。或者,你也可以尝试使用rf方法作为标准随机森林的功能。从以上结果中我们选择RMSE最小的即选择mtry = 15，我们尝试用1000棵树做计算，如下：
+> forest_model <- randomForest(Item_Outlet_Sales ~ ., data = new_train, mtry = 15, ntree = 1000)    #随机森林模型
+> print(forest_model)
+> varImpPlot(forest_model)
+这个模型中可得出RMSE = 1132.04，并没有改进决策树模型。另外，随机森林的一个功能是可以展示重要变量。我们通过下图可以看到最重要的变量是Item_MRP(通过决策树算法也已经表示出来)。
+
+显然，这个模型可以进一步进行尝试调优参数的。同时,让我们用RMSE最好的决策树来对测试集做拟合。如下所示：
+>main_predict <- predict(main_tree, newdata = new_test, type = "vector")
+> sub_file <- data.frame(Item_Identifier = test$Item_Identifier, Outlet_Identifier = test$Outlet_Identifier,  Item_Outlet_Sales = main_predict)
+> write.csv(sub_file, 'Decision_tree_sales.csv')
+当预测其他样本外数据,我们可以得出RMSE是1174.33，这个模型是也可以通过调参数达到更优的，以下列出几种方法：
+ 本例我们没有使用标签编码和独热编码，希望你可以尝试以下编码来做随机森林模型。　
+ 调整相关的参数。　　
+ 使用Gradient Boosting来做模型。　
+ 建立一个新的整体模型。
+大家有什么新的能使模型预测更优的方法都可以一起来讨论，期待与大家的思维的碰撞
+
+
