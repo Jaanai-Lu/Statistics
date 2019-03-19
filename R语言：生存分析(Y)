@@ -1,0 +1,105 @@
+#survivalAnalysis包
+#Univariate Survival Analysis
+library(pacman)
+p_load(survivalAnalysis, tidyverse, tidytidbits, survival)
+survival::lung %>% analyse_survival(vars(time, status))
+analyse_survival(vars(time, status)) %>% print(timespan_unit = 'months')
+survival::lung %>% count_by(ph.ecog)
+survival::lung %>% mutate(ecog=recode_factor(ph.ecog, '0'='0', '1'='1', '2'='2-3', '3'='2-3')) %>%
+  analyse_survival(vars(time, status), by=ecog) -> result
+print(result)
+survival::lung %>% analyse_survival(vars(time, status), by=ph.ecog <= 1, by_label_map=c('TRUE'='ECOG 1-2', 'FALSE'='ECOG 2-3'))
+kaplan_meier_plot(result)
+kaplan_meier_plot(result, break.time.by='breakByQuarterYear', xlab='.OS.months', legend.title='ECOG Status', 
+  hazard.ratio=T, risk.table=TRUE, table.layout='clean', ggtheme=ggplot2::theme_bw(10))
+default_args <- list(break.time.by="breakByMonth", xlab=".OS.months", legend.title="ECOG Status", hazard.ratio=T, risk.table=TRUE,
+  table.layout="clean", ggtheme=ggplot2::theme_bw(10))
+list(result, survival::lung %>% analyse_survival(vars(time, status), by=sex, by_label_map=c(`1`="Male", `2`="Female"))) %>%
+  kaplan_meier_grid(nrow=2, default_args, break.time.by="breakByQuarterYear", mapped_plot_args=list(legend.title=c("ECOG Status", "Sex"),
+  title=c("A", "B"))) %>%
+print
+
+#Multivariate Survival Analysis
+#Multivariate analysis, using the technique of Cox regression, is applied when there are multiple, potentially interacting covariates. 
+#While the log-rank test and Kaplan-Meier plots require categorical variables, 
+#Cox regression works with continuous variables. 
+#(Of course, you can use it with categorical variables as well, but this has implications which are described below.)
+covariate_names <- c(age="Age at Dx",
++                      sex="Sex",
++                      ph.ecog="ECOG Status",
++                      wt.loss="Weight Loss (6 mo.)",
++                      `sex:female`="Female",
++                      `ph.ecog:0`="ECOG 0",
++                      `ph.ecog:1`="ECOG 1",
++                      `ph.ecog:2`="ECOG 2",
++                      `ph.ecog:3`="ECOG 3")
+survival::lung %>%
++     mutate(sex=rename_factor(sex, `1` = "male", `2` = "female")) %>%
++     analyse_multivariate(vars(time, status),
++                          covariates = vars(age, sex, ph.ecog, wt.loss),
++                          covariate_name_dict = covariate_names) ->
++     result
+print(result)
+survival::lung %>%
++     mutate(sex=rename_factor(sex, `1` = "male", `2` = "female"),
++            ph.ecog = as.factor(ph.ecog)) %>%
++     analyse_multivariate(vars(time, status),
++                          covariates = vars(sex, ph.ecog),
++                          covariate_name_dict=covariate_names,
++                          reference_level_dict=c(ph.ecog="0"))
+exp((75-45)*log(1.04)) 
+forest_plot(result)
+forest_plot(result,
++             factor_labeller = covariate_names,
++             endpoint_labeller = c(time="OS"),
++             orderer = ~order(HR),
++             labels_displayed = c("endpoint", "factor", "n"),
++             ggtheme = ggplot2::theme_bw(base_size = 10),
++             relative_widths = c(1, 1.5, 1),
++             HR_x_breaks = c(0.25, 0.5, 0.75, 1, 1.5, 2))
+
+#Multiple Univariate Analyses
+#It is common practice to perform univariate analyses of all covariates first 
+#and take only those into the multivariate analysis which were significant to some level in the univariate analysis. 
+#(I see some pros and strong cons with this procedure, but am open to learn more on this). 
+#The univariate part can easily be achieved using purrr’s map function. 
+#A forest plot, as already said, will happily plot multiple results, even if they come as a list.
+df <- survival::lung %>% mutate(sex=rename_factor(sex, `1` = "male", `2` = "female"))
+map(vars(age, sex, ph.ecog, wt.loss), function(by)
++ {
++     analyse_multivariate(df,
++                          vars(time, status),
++                          covariates = list(by), # covariates expects a list
++                          covariate_name_dict = covariate_names)
++ }) %>%
++     forest_plot(factor_labeller = covariate_names,
++                 endpoint_labeller = c(time="OS"),
++                 orderer = ~order(HR),
++                 labels_displayed = c("endpoint", "factor", "n"),
++                 ggtheme = ggplot2::theme_bw(base_size = 10))
+
+#One-Hot Encoding
+#We are moving to the grounds of exploratory analysis. 
+#For a somewhat interesting example, we add the KRAS mutational status to the data set 
+#(by random sampling, for the sake of this tutorial). 
+#No, there is a categorical variable with five levels, but none of these comes natural as reference level. 
+#One may argue that wild type should be the reference level, 
+#but we may want to know if wild type is better than any KRAS mutation. 
+#If we omit wild-type and compare only among mutated tumors, there is definitely no suitable reference level.
+#The one-hot parameter triggers a mode where for each factor level, the hazard ratio vs. the remaining cohort is plotted. 
+#This means that no level is omitted. 
+#Please be aware of the statistical caveats. 
+#And please note that this has nothing to do any more with multivariate analysis. 
+#In fact, now you need the result of the univariate, categorically-minded analyse_survival.
+survival::lung %>% 
++     mutate(kras=sample(c("WT", "G12C", "G12V", "G12D", "G12A"), 
++                        nrow(.), 
++                        replace = T, 
++                        prob = c(0.6, 0.24, 0.16, 0.06, 0.04))
++     ) %>%
++     analyse_survival(vars(time, status), by=kras) %>%
++     forest_plot(use_one_hot=TRUE,
++                 endpoint_labeller = c(time="OS"),
++                 orderer = ~order(HR),
++                 labels_displayed = c("endpoint", "factor", "n"),
++                 ggtheme = ggplot2::theme_bw(base_size = 10))
