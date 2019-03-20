@@ -1,0 +1,95 @@
+关于R作图的资料汗牛充栋，数不胜数，
+既有基于基础graphics包的，也有基于ggplot2等高级绘图系统包的，还有基于其它JavaScript库封装的动态可视化包的，
+各有各的优势，也各有各的短板。
+总的来看，基础R包的“纸笔模式”更灵活，可以根据绘图思路在任何地方添加需要的图形标记，好比武学中的“内功”，内功基础扎实能快速修炼各路高深武功招式；
+高级绘图包用户调用函数更简洁，实现特定类型的可视化可以做到一键出图，类似于武学中的招式，入门更快，但精进变通不易。
+最近读了Rahlf的Data Visualisation with R: 100 Examples，更是发现，利用基础R包可以灵活做出（设计）多种类型的统计图形，
+而高级绘图系统实现同样的效果并不会更简洁，甚至是难以实现。
+简单条形图
+图形设备
+这里使用的是cairo_pdf图形设备，背景色设置为grey98，图形宽度为9英寸，高度为6.5英寸。
+Rstudio默认的自带的图形设备RStudioGD对很多图形参数设置的兼容性不好，
+在交互绘图中可能会出现各种小bug，只要不报错，不妨等绘图结束输出为PDF文件后再查看效果。
+pdf_file <- "your/figure/path/barcharts_simple.pdf"
+cairo_pdf(bg = "grey98", pdf_file, width = 9, height = 6.5)
+全局绘图参数
+R基础绘图系统依赖于全局绘图参数设置，设置后影响之后的所有绘图输出，
+因此最好的习惯是先用opar = par()存下当前全局绘图参数，在绘图结束后调用par(opar)恢复原设置。
+opar <- par()
+par(
+  omi = c(0.65, 0.25, 0.75, 0.75), #下、左、上、右外边距分别为0.65英寸、0.25英寸、0.75英寸和0.75英寸
+  mai = c(0.3, 1.5, 0.35, 0), #下、左、上、右外边距分别为0.3英寸、1.5英寸、0.35英寸和0英寸。由于左侧要标记条形名称，所以增加了预留宽度
+  mgp = c(3, 3, 0), #标题、坐标轴标签和坐标轴距离绘图区边缘分别为3行、3行和0行，具体距离依赖于文本缩放比例
+  family = 'Arial', #默认字体为Arial
+  las = 1 #坐标轴标签方向，“1”表示始终水平放置标签
+)
+读取数据
+原书数据集为.xlsx格式，故使用readxl包中的read_xlsx()函数进行数据读取，按照Percent变量的增序排序。
+为简化绘图部分的代码输入，用attach()函数将ipsos数据绑定到全局环境上。
+library(readxl)
+library(dplyr)
+ipsos <- readxl::read_xlsx("your/path/to/data/ipsos.xlsx") %>% arrange(Percent)
+attach(ipsos)
+主图及标签
+主图调用barplot()函数绘制，赋值给y是为获取每个条形的纵坐标。
+第一个参数Percent为条形的高度向量，其余参数：
+names.arg = FALSE 不自动标记条形名称（后面手动添加）。
+horiz = TRUE 水平绘制条形图，默认是FALSE。
+border = NA 条形无边框，默认是黑色边框。
+xlim = c(0, 100) 图形X轴的范围是0-100，好的条形图要保证条形都从0开始。
+col = 'grey' 条形填充色为灰色。
+axes = FALSE 不绘制坐标轴。
+y<- barplot(Percent, names.arg = FALSE, horiz = TRUE, border = NA, xlim = c(0, 
+    100), col = "grey", axes = FALSE)
+接下来为每个条形手动添加名称，若条形表示德国（Germany）和巴西（Brazil），字体为黑体，其它的为正常字体。
+用for循环通过text()函数来绘制每个条形标签。
+关键参数是xpd = TRUE，表示绘图区域扩展到原设定的绘图区外，当x（y)坐标值在X(y)轴最小值左侧(下方）时为负。
+水平放置的条形图条形名称一般沿纵坐标轴对齐，因此设置adj = 1使条形名称右对齐。
+font_name <- ifelse(Country %in% c("Germany", "Brazil"), "Arial Black", "Arial")
+for (i in 1:length(Country)) {
+3    text(x = -10, y = y[i], labels = Country[i], adj = 1, xpd = TRUE, cex = 0.85, 
+4        family = font_name[i])
+5    text(x = -3.5, y = y[i], labels = Percent[i], adj = 1, xpd = TRUE, cex = 0.85, 
+6        family = font_name[i])
+7
+8}
+9
+主图背景阴影
+添加背景阴影除了美观之外，另一个作用是辅助判断每个条形的长度，作用相当于网格线。因此，对于水平放置的条形图，应绘制垂直的阴影或网格线，对于垂直放置的条形图，则相反。本例的背景阴影将X轴（0-100）分为五组，即0-20，20-40，40-60，60-80，80-100，并绘制相应的矩形，矩形填充色设置为半透明的浅蓝色，同时相邻两个矩形填充色的透明度不同，保证能区别不同的矩形。
+1xleft <- seq(0, 80, length.out = 5)
+2xright <- seq(20, 100, length.out = 5)
+3ybottom <- rep(0, 5)
+4ytop <- rep(19.4, 5)
+5col_name <- ifelse(1:5%%2 == 1, rgb(191, 239, 255, 80, maxColorValue = 255), 
+6    rgb(191, 239, 255, 120, maxColorValue = 255))
+7rect(xleft, ybottom, xright, ytop, col = col_name, border = NA)
+特定条形高亮
+特定条形高亮有两种实现方案：一是在绘制条形图时指定每个条形的col值；二是绘制需要高亮的条形覆盖到主条形图上。这里采用了第二种方案，主要是第一种方案设置背景阴影时会覆盖高亮条形，影响高亮效果。首先将德国、巴西之外的其它国家的条形高度设置为0，然后指定高亮颜色，为品红色，最后绘制高亮条形图，注意添加add = TRUE参数，将高亮条形叠加到原图上。
+1ger_bra <- ifelse(Country %in% c("Germany", "Brazil"), Percent, 0)
+2
+3col <- rgb(255, 0, 210, maxColorValue = 255)
+4x2 <- barplot(ger_bra, names.arg = FALSE, horiz = TRUE, border = NA, xlim = c(0, 
+5    100), col = col, cex.names = 0.85, axes = FALSE, add = TRUE)
+6
+其它细节图形标记
+用arrows()函数标记所有数据的均值线x = 45（注意图中的16个国家并不是所有接受调查的国家），为了使均值线延伸到绘图区域外，需要设置xpd = TRUE，这里不需要绘制箭头，所以参数length设置为0，为了美观，均值线两端额外添加了黑色装饰线。
+用text()函数添加辅助文本，第一、二条在均值线旁标记了该线名称和取值，第三条在右上角标记了图中所有值均为百分数。
+用mtext()函数设置坐标轴标签、图形主标题、副标题和数据来源。该函数用文本行数（line）控制到绘图区的距离，用adj参数控制文本左右位置，0表示居左，1表示居右，0.5表示居中，其它位置依此计算。outer = TRUE让标记的文本可以延伸到外边距（omi设置的边距）。
+ 1arrows(45, -0.5, 45, 20, lwd = 1.5, length = 0, xpd = TRUE, col = "skyblue3")
+ 2arrows(45, -0.5, 45, -0.75, lwd = 3, length = 0, xpd = TRUE)
+ 3arrows(45, 20, 45, 20.25, lwd = 3, length = 0, xpd = TRUE)
+ 4text(39, 20, "Average", adj = 1, xpd = TRUE, cex = 0.65, font = 3)
+ 5text(43, 20, "45", adj = 1, xpd = TRUE, cex = 0.65, font = 4)
+ 6text(100, 20, "All values in percent", adj = 1, xpd = TRUE, cex = 0.65, font = 3)
+ 7xlab <- c(0, 20, 40, 60, 80, 100)
+ 8mtext(xlab, at = xlab, 1, line = 0, cex = 0.8)
+ 9
+10mtext("\"I Definitely Believe in God or a Supreme Being\"", 3, line = 1.3, adj = 0, 
+11    cex = 1.2, family = "Times New Roman", outer = TRUE)
+12mtext("was said in 2010 in:", 3, line = -0.5, adj = 0, cex = 0.9, outer = TRUE)
+13mtext("Source: www.ipsos–na.com, Design: Stefan Fichtel, ixtract", 1, line = 1, 
+14    adj = 1, cex = 0.65, outer = TRUE, font = 3)
+
+绘图完毕后，记得调用par(opar)恢复原绘图参数设置，并关闭图形设备。
+1par(opar)
+2dev.off()
