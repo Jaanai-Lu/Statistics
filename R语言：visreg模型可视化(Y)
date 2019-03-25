@@ -1,0 +1,137 @@
+简单介绍
+统计建模一直是数据分析的核心模块，
+一般情况下，学术期刊上都是用数据表进行汇报，具有专门的统计训练的人，能很快理解各个变量之间的关系。
+但是，并不是所有的报告都面向专业人士，所以能用最通俗易懂的统计图形呈现估计结果，会让更多的人理解模型分析结果。
+接下来，要介绍的就是visreg包，这个包简单易用，几乎支持了所有的回归分析模型，
+同时支持各种各样的ggplot2包提供的geom_*图层和其他扩展主题，是进行模型可视化的利器。
+使用之前，请先安装必要的包。
+if(!require(visreg)){
+  install.packages("visreg")
+}
+为了使用ggplot2引擎，需要安装相应的扩展包。
+if(!require(ggplot2)){
+  install.packages("ggplot2")
+}
+
+生成本文所需的数据
+利用R语言随机数，模拟生成了100个样本的玩具数据，这里只是方便理解visreg包提供的可视化函数，变量之间的逻辑关系和分布并没有严格考虑。
+set.seed(20180730)
+x1 <- rnorm(100)
+x2 <- rnorm(100, sd = 2)
+x3 <- rnorm(100, sd = 1.7) + 0.3
+cat <- sample(c(0, 1), 100, replace = TRUE)
+e <- rnorm(100, mean = 2, sd = 1)
+y0 <- 2 + 0.5 * x1 + 2.4 * x2 + 1.2 * x1 * x2 + e
+y1 <- 0.8 + 1.7 * x1 + 1.4 * x2 + 0.5 * x1 * x2 + e
+y <- ifelse(cat == 0, y0, y1)
+data <- data.frame(y, x1, x2, x3, cat = as.factor(cat))
+各个变量之间关系如下图所示：
+GGally::ggpairs(data)
+## 需要安装GGally包，没安装请运行install.packages('GGally')
+
+回归模型可视化
+模型估计
+visreg进行模型可视化需要先对模型进行估计，然后把模型估计结果作为参数传入visreg()函数。
+下面我们简单估计了四个模型，后文会断断续续用到。
+reg01 <- lm(y ~ x1 + x2 + x3 + cat, data = data)
+reg02 <- lm(y ~ x1 + x2 + x1 * x2 + x3 + cat, data = data)
+reg_cat0 <- lm(y ~ x1 + x2 + x1 * x2 + x3, data = data[data$cat == 0, ])
+reg_cat1 <- lm(y ~ x1 + x2 + x1 * x2 + x3, data = data[data$cat == 1, ])
+texreg::htmlreg(list(reg01, reg02, reg_cat0, reg_cat1), single.row = TRUE)
+
+Statistical models
+## 需要texreg包，没安装请运行install.packages('texreg')
+可视化
+visreg包对单变量可视化时非常简洁，visreg()一条命令解决所有烦恼。
+默认在图中会显示出因变量、自变量之间的拟合直线、置信区间以及原数据散点图。
+visreg()前两个参数分别为fit和xvar，前者为模型估计结果，后者为需要绘图的自变量。
+当不指定xvar参数时，会依次绘制因变量和所有自变量之间的关系图。
+library(visreg)
+par(mfrow = c(2, 2))  ##reg01模型中有四个变量，设置为2 x 2的图
+visreg(reg01)
+通过设置xvar参数来绘制指定自变量关系图。
+visreg(reg01, "x1")  ##注意，变量名一定要用引号括起来，不然会报错
+除了可以对数值变量进行可视化外，也可以对虚拟变量进行可视化，参数设置规则跟数值变量一样。
+这里的虚拟变量是R中的因子（factor）类，当原数据中是字符串向量时，lm()函数默认转换为因子进行估计。
+visreg(reg01, "cat")
+当然，可以根据某个条件将数据分组，然后每组的因变量和自变量之间的关系图。
+比如，我们的数据中有一个cat变量，是一个二值虚拟变量，我们根据cat把数据拆分成两组，在visreg()函数中设置条件变量by = "cat"来完成全部设置。
+visreg(reg01, "x1", by = "cat")
+当分组变量是连续性变量时，可以breaks参数控制该变量被分成的组数。layout=c(2,2)和par(mfrow = c(2,2))作用类似，控制作图排列方式。
+visreg(reg01, "x1", by = "x2", breaks = 4, layout = c(2, 2))
+默认的分组图是根据给定条件进行分面（facet），类似于ggplot2包中的facet_grid()和facet_wrap()函数，
+可以设置overlay = TRUE在同一幅图中通过图层叠加进行展示。
+visreg(reg01, "x1", by = "cat", overlay = TRUE)
+双变量可视化
+此处的双变量是指两个自变量互相之间的情况，visreg包默认采用2.5D热图呈现的，颜色差别代表了因变量值的差异，横纵坐标分别表示两个自变量。
+下面我们在一幅图上展现y和x1、x2变量之间的关系。此时需要用到visreg2d()函数，与visreg()类似，第一个参数任然是估计模型，第二、三个参数分别为xvar、yvar，分别表示横纵坐标。
+visreg2d(reg02, "x1", "x2")
+
+visreg2d()函数有个plot.type参数来控制绘图类型。设置参数plot.type="persp"时是绘制3D表面图。
+visreg2d(reg02, "x1", "x2", plot.type = "persp")
+
+也可以通过设置参数plot.type="rgl"使用rgl包绘制3D图。
+visreg2d(reg02, "x1", "x2", plot.type = "rgl")  ##偷个懒，没有截图展示结果
+
+使用ggplot2绘图引擎
+
+visreg包默认底层使用的是R语言基本绘图函数plot()作为引擎，但可以设置参数gg = TRUE来使用ggplot2绘图引擎。
+visreg(reg01, "x1", gg = TRUE)
+和基本绘图函数plot()一样，我们也可以向visreg()中传递参数，调整各种绘图细节。这里我们把线条颜色设置为红色（"red"），置信区间阴影设置为绿色（"green"），散点大小为3（size=3，样式为21（pch=21）。
+visreg(reg01, "x1", gg = TRUE, line = list(col = "red"), fill = list(fill = "green"), 
+    points = list(size = 3, pch = 21))
+
+使用ggplot()绘图引擎时，可以方便的添加ggplot2包中的geom_*()图层。比如，我们可以在上图中添加局部平滑（smooth）拟合曲线。
+library(ggplot2)  ##加载`ggplot2`包visreg(reg01, "x1", gg = TRUE) + geom_smooth(method = "loess", col = "blue",     fill = "#FF4E37")
+
+既然能使用ggplot2的图层，自然也可以使用ggthemes提供的各种样式。
+PS:我自己使用的感觉，visreg()和直接用ggplot()函数绘制的图形有较大区别，即使使用相同样式。
+library(ggthemes)
+visreg(reg01, "x1", gg = TRUE) + geom_smooth(method = "loess", col = "blue", 
+    fill = "#FF4E37") + theme_economist()
+
+其它模型可视化
+
+visreg包不仅可以做普通最小二乘回归结果的可视化，同时还支持广义最小二乘回归、随机森林模、支持向量机等其它模型。
+
+广义最小二乘回归可视化
+
+广义最小二乘和普通最小二乘回归可视化几乎一样，下面通过一个简单的例子进行说明。
+data("birthwt", package = "MASS")
+fit <- glm(low ~ age + race + smoke + lwt, data = birthwt, family = "binomial")
+visreg(fit, "lwt", gg = TRUE, xlab = "Mother's weight", ylab = "Log odds (low birthweight)")
+
+visreg()函数默认纵轴为对数几率比，横轴为给定自变量。有时候直接呈现因变量的估计概率会更直观。可以通过scale="response"来改变默认行为。
+data("birthwt", package = "MASS")
+fit <- glm(low ~ age + race + smoke + lwt, data = birthwt, family = "binomial")
+visreg(fit, "lwt", scale = "response", gg = TRUE, xlab = "Mother's weight", 
+    ylab = "P(low birthweight)")
+
+随机森林等算法可视化
+
+visreg包主要目的是解决回归模型可视化问题，但也适用于其它任何基于formula类，并且提供了predict()方法的模型可视化。接下来通过几个实例来进行说明。
+
+随机森林模型
+
+library(randomForest)
+aq <- na.omit(airquality)
+fit <- randomForest(Ozone ~ Solar.R + Wind + Temp, data = aq)
+visreg(fit, "Temp", gg = TRUE, ylab = "Ozone")
+
+支持向量机模型
+
+library(e1071)
+fit <- svm(Ozone ~ Solar.R + Wind + Temp, data = aq)
+visreg(fit, "Temp", ylab = "Ozone")
+
+
+梯度下降模型
+
+由于gbm包没有提供residuals方法，所以该包的梯度下降模型可视化不能显示残差散点。我们可以进行自定义该方法。
+residuals.gbm <- function(fit) {
+    fit$data$y - fit$fit
+}
+定义完后再调用visreg()函数就能绘制残差散点了。
+library(gbm)
+fit <- gbm(Ozone ~ Solar.R + Wind + Temp, data = aq, distribution = "gaussian")
+visreg(fit, "Temp", ylab = "Ozone")
