@@ -64,69 +64,51 @@ visreg(reg01, "x1", by = "x2", breaks = 4, layout = c(2, 2))
 visreg(reg01, "x1", by = "cat", overlay = TRUE)
 双变量可视化
 此处的双变量是指两个自变量互相之间的情况，visreg包默认采用2.5D热图呈现的，颜色差别代表了因变量值的差异，横纵坐标分别表示两个自变量。
-下面我们在一幅图上展现y和x1、x2变量之间的关系。此时需要用到visreg2d()函数，与visreg()类似，第一个参数任然是估计模型，第二、三个参数分别为xvar、yvar，分别表示横纵坐标。
+下面我们在一幅图上展现y和x1、x2变量之间的关系。
+此时需要用到visreg2d()函数，与visreg()类似，第一个参数任然是估计模型，第二、三个参数分别为xvar、yvar，分别表示横纵坐标。
 visreg2d(reg02, "x1", "x2")
-
 visreg2d()函数有个plot.type参数来控制绘图类型。设置参数plot.type="persp"时是绘制3D表面图。
 visreg2d(reg02, "x1", "x2", plot.type = "persp")
-
 也可以通过设置参数plot.type="rgl"使用rgl包绘制3D图。
-visreg2d(reg02, "x1", "x2", plot.type = "rgl")  ##偷个懒，没有截图展示结果
-
+visreg2d(reg02, "x1", "x2", plot.type = "rgl") 
 使用ggplot2绘图引擎
-
 visreg包默认底层使用的是R语言基本绘图函数plot()作为引擎，但可以设置参数gg = TRUE来使用ggplot2绘图引擎。
 visreg(reg01, "x1", gg = TRUE)
-和基本绘图函数plot()一样，我们也可以向visreg()中传递参数，调整各种绘图细节。这里我们把线条颜色设置为红色（"red"），置信区间阴影设置为绿色（"green"），散点大小为3（size=3，样式为21（pch=21）。
-visreg(reg01, "x1", gg = TRUE, line = list(col = "red"), fill = list(fill = "green"), 
-    points = list(size = 3, pch = 21))
-
-使用ggplot()绘图引擎时，可以方便的添加ggplot2包中的geom_*()图层。比如，我们可以在上图中添加局部平滑（smooth）拟合曲线。
-library(ggplot2)  ##加载`ggplot2`包visreg(reg01, "x1", gg = TRUE) + geom_smooth(method = "loess", col = "blue",     fill = "#FF4E37")
-
+和基本绘图函数plot()一样，我们也可以向visreg()中传递参数，调整各种绘图细节。
+这里我们把线条颜色设置为红色（"red"），置信区间阴影设置为绿色（"green"），散点大小为3（size=3），样式为21（pch=21）。
+visreg(reg01, "x1", gg = TRUE, line = list(col = "red"), fill = list(fill = "green"), points = list(size = 3, pch = 21))
+使用ggplot()绘图引擎时，可以方便的添加ggplot2包中的geom_*()图层。
+比如，我们可以在上图中添加局部平滑（smooth）拟合曲线。
+library(ggplot2)  ##加载ggplot2包
+visreg(reg01, "x1", gg = TRUE) + geom_smooth(method = "loess", col = "blue", fill = "#FF4E37")
 既然能使用ggplot2的图层，自然也可以使用ggthemes提供的各种样式。
-PS:我自己使用的感觉，visreg()和直接用ggplot()函数绘制的图形有较大区别，即使使用相同样式。
 library(ggthemes)
-visreg(reg01, "x1", gg = TRUE) + geom_smooth(method = "loess", col = "blue", 
-    fill = "#FF4E37") + theme_economist()
+visreg(reg01, "x1", gg = TRUE) + geom_smooth(method = "loess", col = "blue", fill = "#FF4E37") + theme_economist()
 
 其它模型可视化
-
-visreg包不仅可以做普通最小二乘回归结果的可视化，同时还支持广义最小二乘回归、随机森林模、支持向量机等其它模型。
-
+visreg包不仅可以做普通最小二乘回归结果的可视化，同时还支持广义最小二乘回归、随机森林模型、支持向量机等其它模型。
 广义最小二乘回归可视化
-
 广义最小二乘和普通最小二乘回归可视化几乎一样，下面通过一个简单的例子进行说明。
 data("birthwt", package = "MASS")
 fit <- glm(low ~ age + race + smoke + lwt, data = birthwt, family = "binomial")
 visreg(fit, "lwt", gg = TRUE, xlab = "Mother's weight", ylab = "Log odds (low birthweight)")
-
 visreg()函数默认纵轴为对数几率比，横轴为给定自变量。有时候直接呈现因变量的估计概率会更直观。可以通过scale="response"来改变默认行为。
 data("birthwt", package = "MASS")
 fit <- glm(low ~ age + race + smoke + lwt, data = birthwt, family = "binomial")
-visreg(fit, "lwt", scale = "response", gg = TRUE, xlab = "Mother's weight", 
-    ylab = "P(low birthweight)")
-
+visreg(fit, "lwt", scale = "response", gg = TRUE, xlab = "Mother's weight", ylab = "P(low birthweight)")
 随机森林等算法可视化
-
-visreg包主要目的是解决回归模型可视化问题，但也适用于其它任何基于formula类，并且提供了predict()方法的模型可视化。接下来通过几个实例来进行说明。
-
-随机森林模型
-
+visreg包主要目的是解决回归模型可视化问题，但也适用于其它任何基于formula类，并且提供了predict()方法的模型可视化。
+接下来通过几个实例来进行说明。
+随机森林模型：
 library(randomForest)
 aq <- na.omit(airquality)
 fit <- randomForest(Ozone ~ Solar.R + Wind + Temp, data = aq)
 visreg(fit, "Temp", gg = TRUE, ylab = "Ozone")
-
-支持向量机模型
-
+支持向量机模型：
 library(e1071)
 fit <- svm(Ozone ~ Solar.R + Wind + Temp, data = aq)
 visreg(fit, "Temp", ylab = "Ozone")
-
-
-梯度下降模型
-
+梯度下降模型：
 由于gbm包没有提供residuals方法，所以该包的梯度下降模型可视化不能显示残差散点。我们可以进行自定义该方法。
 residuals.gbm <- function(fit) {
     fit$data$y - fit$fit
