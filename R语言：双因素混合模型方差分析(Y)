@@ -150,4 +150,117 @@ ylab(label = 'Mean of J') +
 theme_bw() +
 theme(axis.title = element_text(family = 'serif', face = 'italic'))
 #绘制箱式图
- boxplot(J ~ group * time, data = data, col = (c('gold', 'green')), main = 'Control and Experiment', ylab = 'J(mv)')
+boxplot(J ~ group * time, data = data, col = (c('gold', 'green')), main = 'Control and Experiment', ylab = 'J(mv)')
+
+
+1. 什么是方差分析：
+方差分析（analysis of variance，ANOVA）是分析类别变量对数值因变量影响的一种统计方法，
+其中类别变量称为因子，类别变量的值称为处理或水平。接受处理的对象或实体称为实验单元，
+方差分析的原理：通过对数据误差的分析来判断类别自变量对数值因变量的影响效果是否显著。
+
+2. 误差分解：
+总误差 = 处理误差 + 随机误差
+总误差为总平方和
+处理误差和一部分随机误差为处理平方和
+另一部分随机误差为误差平方和
+总平方和 = 处理平方和 + 误差平方和
+
+3. 方差分析的基本假定：
+正态性：每个处理所对应的总体服从正态分布
+方差齐性：各个总体的方差必须相等
+独立性：每个样本数据都来自不同处理的独立样本
+
+4. 单因子方差分析：
+线性模型：
+yij = ui + eij
+其中 yij表示第i个处理的第j个观察值；ui表示第i个处理的平均值,eij表示第i个处理的第j个观察值的随机误差。
+然后根据统计量F计算出P值，与置信水平做出判断。
+R模拟操作：（研究品种与产量的方差分析）
+> example8_2
+# A tibble: 30 x 4
+      X1  地块 品种   产量
+   <int> <int> <chr> <int>
+ 1     1     1 品种1    81
+ 2     2     2 品种1    82
+# ... with 20 more rows
+
+检验：
+#正态检验
+> library(car)
+> library(carData)
+> attach(example8_2)
+> qqPlot(lm(产量~品种))
+#方差检验
+> bartlett.test(产量~品种,data=example8_2)
+	Bartlett test of homogeneity of variances
+data:  产量 by 品种
+Bartlett's K-squared = 0.30152, df = 2, p-value = 0.8601
+
+
+方差分析：由于P=0.000158<0.05,所有品种对产量存在影响。
+> mode1_1w=aov(产量~品种)
+> summary(mode1_1w)
+            Df Sum Sq Mean Sq F value   Pr(>F)    
+品种         2    560  280.00   12.31 0.000158 ***
+Residuals   27    614   22.74                     
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+5，效应量分析：
+在单因子方差分析中因子平方和与总体平方和之比，它反映量在因变量取值的总误差中被因子解释的比例，效应量越大说明自变量与因变量之间的关系就越强。公式为：
+
+
+6，多重比较：对不同处理之间的均值配对比较就是方差分析的多重比较，主要方法有Fisher的LSD(最小显著差异)法，Tukey-Krammer的HSD方法，感兴趣可以自己查阅资料。
+
+7，双因子方差分析只从与单因子方差分析不同的角度，简单描述：
+
+7.1，模型较复杂：(是否考虑交互效应r可分为两种情况)
+考虑交互效应的误差分解
+考虑交互效应的双因子方差分析表
+7.2，R模拟双因子分析：
+
+> attach(example8_5)
+The following objects are masked from example8_2:
+
+    产量, 品种, X1
+
+> par(family ='SimSun')
+> boxplot(产量~品种+施肥方式,col=c("gold","green","red"),ylab="产量",xlab="品种+施肥方式", data = example8_5)
+
+7.3，主效应方差分析表
+
+> model1_2w<-aov(产量~品种+施肥方式, data=example8_5)
+> summary(model1_2w)
+            Df Sum Sq Mean Sq F value   Pr(>F)    
+品种         2    560   280.0   54.33 5.18e-10 ***
+施肥方式     1    480   480.0   93.13 4.42e-10 ***
+Residuals   26    134     5.2                     
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> 
+#主效应方差分析模型的参数估计
+> model1_2w$coefficients
+(Intercept)   品种品种2   品种品种3  施肥方式乙 
+         80         -10          -2           8 
+> 
+7.4，交叉效应方差分析表：
+> model1_2wi<-aov(产量~品种+施肥方式+品种:施肥方式, data=example8_5)
+> summary(model1_2wi)
+              Df Sum Sq Mean Sq F value   Pr(>F)    
+品种           2  560.0   280.0   54.37 1.22e-09 ***
+施肥方式       1  480.0   480.0   93.20 9.73e-10 ***
+品种:施肥方式  2   10.4     5.2    1.01    0.379    
+Residuals     24  123.6     5.1                     
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> 
+#交叉效应方差分析的模型的参数估计
+> model1_2wi$coefficients
+         (Intercept)            品种品种2            品种品种3 
+                80.2                 -9.6                 -3.0 
+          施肥方式乙 品种品种2:施肥方式乙 品种品种3:施肥方式乙 
+                 7.6                 -0.8                  2.0 
+> 
+
+
+最后，我们可以做模型对比：主效应方差分析与交叉效应方差分析模型对比，来佐证交叉效应是否显著。
