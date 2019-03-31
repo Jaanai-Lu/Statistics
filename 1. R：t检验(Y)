@@ -73,3 +73,6 @@ t.test(before, after, paired = T)
 # 若 paired = T,为配对检验，则必须指定x和y，并且它们必须是相同的长度。默认删除缺失值（如果配对为TRUE，则成对配对）
 # var.equal是逻辑变量，var.equal = TRUE表示两样本方差相同，var.equal = FALSE（缺省）表示两样本方差不同
 # conf.level置信水平，即1-α，通常是0.95。
+
+问题？
+非均衡比较的处理
