@@ -1,85 +1,87 @@
 重复测量：即受试者被测量不止一次。
 如下图所示：
-                                       含组间和组内因子的双因素方差分析                      时间（组内因子）
-                                            患者                                  5周                      6个月 
+                                  含组间和组内因子的双因素方差分析                           时间（组内因子）
+                                            患者                                5周                      6个月 
                                              s1
                         CBT                  s2
-      疗法（组间因子）                        s3
+      疗法（组间因子）                          s3
                                              s4
                        EMDR                  s5
                                              s6
 疗法和时间都作为因子时，我们既可分析疗法的影响（时间跨度上的平均）和时间的影响（疗法类型跨度上的平均），又可分析疗法和时间的交互影响
-前两个称作主效应，交互部分称作交互效应
+前两个称作主效应，交互部分称作交互效应。
 当设计包含两个甚至更多因子时，便是因素方差分析设计，比如两因子时称作双因素方差分析，三因子时称作三因素方差分析
 若因子设计包括组内和组间因子，又称作混合模型方差分析，当前的例子就是典型的双因素混合模型方差分析
-我们通常关注的问题，常含有一个组内和一个组间因子的重复测量方差分析
-组内：两组受试者相同
-组间：两组受试者不同
-本次使用的数据集来源于生理生态领域
-组间因子是植物类型Type（魁北克VS.密西西比），组内因子是二氧化碳浓度conc（共7个水平）
-组间、组内因子都需要转换为因子变量
-因变量是二氧化碳吸收量uptake
+我们通常关注的问题，常含有一个组内和一个组间因子的重复测量方差分析：
+组内：两组受试者相同                      组间：两组受试者不同
+
+本次使用的数据集来源于生理生态领域：
+组间因子是植物类型Type（魁北克VS密西西比），组内因子是二氧化碳浓度conc（共7个水平），注意：组间、组内因子都需要转换为因子变量
+因变量是二氧化碳吸收量uptake。
+
 #查看数据集前几列
 head(CO2)
 #查看两个影响因子的列联表
-table(CO2$Type,CO2$conc)
-查看数据集总是最基本的一步
+table(CO2$Type, CO2$conc)
+查看数据集总是最基本的一步。
 通常处理的数据集是宽格式（wide format），即列是变量，行是观测值，而且一行一个受试对象
 不过在处理重复测量设计时，需要有长格式（long format）数据才能拟合模型
-在长格式中，因变量的每次测量都要放到它独有的行中，CO2数据集即该种形式
-reshape包可方便地将数据转换为相应的格式
-传统的重复测量方差分析假设任意组内因子的协方差矩阵为球形，并且任意组内因子两水平间的方差之差都相等
-但在现实中这种假设不可能满足，于是衍生了一系列备选方法：
-见《R语言实战》216页
+在长格式中，因变量的每次测量都要放到它独有的行中，CO2数据集即该种形式。
+reshape包可方便地将数据转换为相应的格式。
+
+传统的重复测量方差分析假设任意组内因子的协方差矩阵为球形，并且任意组内因子两水平间的方差之差都相等，
+但在现实中这种假设不可能满足，于是衍生了一系列备选方法：见《R语言实战》216页
 #检验假设条件  
 1.正态性检验  
 #加载程序包
 library(car)
 #正态性检验
-qqPlot(lm(uptake ~ Type + conc,data = CO2),simulate = TRUE,main = 'Q-Q Plot',labels=False,ylab = 'Value')
-数据基本均集中在直线附近，正态性假设成立。
+qqPlot(lm(uptake ~ Type + conc, data = CO2), simulate = TRUE, main = 'Q-Q Plot', labels = False, ylab = 'Value')
+数据基本均集中在直线附近，即为正态性假设成立。
 2.方差齐性检验  
 #方差齐性检验
-bartlett.test(uptake ~ Type,data = CO2)
+bartlett.test(uptake ~ Type, data = CO2)
 3.球形检验 (Mauchly's Test of Sphericity) 是前提条件
-该检验综合评价组间以及各个时间点测量指标是否满足方差齐性的，P值大于等于0.1表示满足球形检验
-OBrienKaiser[,-c(1:2)] -> data #去掉前两列
+该检验综合评价组间以及各个时间点测量指标是否满足方差齐性，P值大于等于0.1表示满足球形检验
+OBrienKaiser[, -c(1:2)] -> data #去掉前两列
 as.matrix(data) -> data #将data从数据框转换为矩阵，data的格式为16行×15列
 lm(data ~ 1) -> mlmfit #进行多元线性回归 (多个因变量)
-factor(rep(c("A","B","C"), c(5, 5, 5))) -> group
-ordered(rep(1:5,3)) -> time
+factor(rep(c("A", "B", "C"), c(5, 5, 5))) -> group
+ordered(rep(1:5, 3)) -> time
 data.frame(group,time) -> idata
 #球形检验
 mauchly.test(mlmfit, M = ~ group + time, X = ~ time, data = idata)
-由结果可以看出，球形检验的P值为0.0863<0.1，尚不能认为该重复测量资料满足球形检验的前提假设
-应该采用Greenhouse-Geisser方法进行校正，或者采用线性混合效应模型等进行分析
-下面我们将对数据进行分析  
+由结果可以看出，球形检验的P值为0.0863<0.1，尚不能认为该重复测量资料满足球形检验的前提假设，
+应该采用Greenhouse-Geisser方法进行校正，或者采用线性混合效应模型等进行分析。
+
+下面我们将对数据进行分析：
 #使数据集保持打开
 attach(CO2)
 #计算均值
-aggregate(uptake,by=list(Type,conc),FUN=mean)
+aggregate(uptake, by=list(Type, conc), FUN=mean)
 #计算标准差
-aggregate(uptake,by=list(Type,conc),FUN=sd)
+aggregate(uptake, by=list(Type, conc), FUN=sd)
 #重复性方差分析  
 #将conc转换为因子
 CO2$conc <- factor(CO2$conc)
 #提取出chilled处理列，控制变量
-wlbl <- subset(CO2,Treatment == 'chilled')
+wlbl <- subset(CO2, Treatment == 'chilled')
 #进行方差分析
-fit <- aov(uptake ~ Type*conc + Error(Plant/(conc)),wlbl)
+fit <- aov(uptake ~ Type*conc + Error(Plant/(conc)), wlbl)
 #查看结果
 summary(fit)
-P均小于0。05，主效应和交互效应都很显著
+P均小于0.05，主效应和交互效应都很显著
 结论：
 <a>  二氧化碳吸收量与植物类型有关
 <b>  二氧化碳吸收量与二氧化碳浓度有关
+
 #一图胜千言之绘图 
 #加载程序包
 library('ggplot2')
 #计算uptake均值并存储
-data <- aggregate(uptake,by=list(Type,conc),FUN=mean)
+aggregate(uptake, by=list(Type, conc), FUN=mean) -> data
 #以上面的计算结果绘制均值变化曲线
-ggplot(data = data,mapping = aes(x=Group.2,y=x,colour=Group.1)) +
+ggplot(data = data, mapping = aes(x=Group.2, y=x, colour=Group.1)) +
   #绘制点图
   geom_point() +
   #绘制折线图
@@ -93,7 +95,7 @@ ggplot(data = data,mapping = aes(x=Group.2,y=x,colour=Group.1)) +
   #设置XY轴标题的类型
   theme(axis.title = element_text(family = 'serif',face = 'italic'))
 #绘传入数据
-ggplot(data = wlbl,aes(x=conc,y=uptake,colour=Type)) +
+ggplot(data = wlbl, aes(x=conc, y=uptake, colour=Type)) +
   #绘制箱型图
   geom_boxplot() +
   #设置背景主题
@@ -101,9 +103,10 @@ ggplot(data = wlbl,aes(x=conc,y=uptake,colour=Type)) +
   #更改主题元素
   theme(panel.background = element_blank(),
         panel.grid = element_blank(),
-        axis.title = element_text(family = 'serif',face = 'italic'))
+        axis.title = element_text(family = 'serif', face = 'italic'))
 从以上任意一幅图都可以看出，魁北克省的植物比密西西比州的植物二氧化碳吸收率高，而且随着CO2浓度的升高，差异越来越明显。
-#上手
+
+#分析活上手
 c(0.18, 0.2, 0.19, 0.22, 0.21, 0.17, 0.16, 0.18) -> cm1
 c(0.2, 0.22, 0.23, 0.23, 0.22, 0.2, 0.19, 0.2) -> cm3
 c(0.22, 0.23, 0.22, 0.25, 0.26, 0.23, 0.19, 0.21) -> cm6
@@ -111,7 +114,7 @@ c(0.17, 0.15, 0.18, 0.19, 0.2, 0.14, 0.18, 0.15) -> tm1
 c(0.15, 0.14, 0.15, 0.16, 0.15, 0.1, 0.13, 0.11) -> tm3
 c(0.08, 0.1, 0.14, 0.12, 0.11, 0.07, 0.1, 0.07) -> tm6
 c(cm1, cm3, cm6, tm1, tm3, tm6) -> x
-c(rep('control', 8), rep('control', 8), rep('control', 8), rep('experiment', 8), rep('experiment', 8), rep('experiment', 8)) -> group
+c(rep('control',8),rep('control',8),rep('control',8),rep('experiment',8),rep('experiment',8),rep('experiment',8)) -> group
 c(rep(10, 8), rep(30, 8), rep(60, 8), rep(10, 8), rep(30, 8), rep(60, 8)) -> time
 data.frame(x, group, time) -> data
 #球形检验
@@ -119,7 +122,7 @@ read.xlsx('zhang1.xlsx', sheetIndex = 'Sheet2') -> data
 as.matrix(data) -> data
 lm(data ~ 1) -> mlmfit
 factor(rep(c("control","experiment"), c(3, 3))) -> group
-c(rep(c(10, 30, 60, 10, 30, 60))) -> time
+factor(rep(c(10, 30, 60, 10, 30, 60))) -> time
 data.frame(group,time) -> idata
 mauchly.test(mlmfit, M = ~ group + time, X = ~ time, data = idata)
 #P值为1大于0.01，即可认为该重复测量资料满足球形检验的前提假设
@@ -130,14 +133,13 @@ bartlett.test(x ~ group, data = data)
 library(xlsx)
 write.xlsx(data, 'data.xlsx')
 read.xlsx('data.xlsx', sheetIndex = 'Sheet1') -> data
-factor(data$time) -> data$time
 # 含单个组内因子（W）和单个组间因子（B）的重复测量ANOVA
 # y ~ B * W + Error(subject/W) #顺序很重要！
 summary(aov(x ~ group*time + Error(subject/(time)), data = data))
 #作图方法一
 par(las = 2)
 par(mar = c(10, 4, 4, 2))
-with(data, interaction.plot(time, group, J, type = 'b', col = c('red','blue'), pch = c(16, 18), main = 'Interaction Plot for Group and Time'))
+with(data,interaction.plot(time,group,J,type='b',col=c('red','blue'),pch=c(16,18),main='Interaction Plot for Group and Time'))
 #作图方法二
 library(pacman)
 p_load(ggplot2)
@@ -152,24 +154,20 @@ theme(axis.title = element_text(family = 'serif', face = 'italic'))
 #绘制箱式图
 boxplot(J ~ group * time, data = data, col = (c('gold', 'green')), main = 'Control and Experiment', ylab = 'J(mv)')
 
-
 1. 什么是方差分析：
 方差分析（analysis of variance，ANOVA）是分析类别变量对数值因变量影响的一种统计方法，
-其中类别变量称为因子，类别变量的值称为处理或水平。接受处理的对象或实体称为实验单元，
+其中类别变量称为因子，类别变量的值称为处理或水平。
 方差分析的原理：通过对数据误差的分析来判断类别自变量对数值因变量的影响效果是否显著。
-
 2. 误差分解：
 总误差 = 处理误差 + 随机误差
 总误差为总平方和
 处理误差和一部分随机误差为处理平方和
 另一部分随机误差为误差平方和
 总平方和 = 处理平方和 + 误差平方和
-
 3. 方差分析的基本假定：
 正态性：每个处理所对应的总体服从正态分布
 方差齐性：各个总体的方差必须相等
 独立性：每个样本数据都来自不同处理的独立样本
-
 4. 单因子方差分析：
 线性模型：
 yij = ui + eij
@@ -190,12 +188,12 @@ R模拟操作：（研究品种与产量的方差分析）
 > attach(example8_2)
 > qqPlot(lm(产量~品种))
 #方差检验
-> bartlett.test(产量~品种,data=example8_2)
+> bartlett.test(产量 ~ 品种, data=example8_2)
 	Bartlett test of homogeneity of variances
 data:  产量 by 品种
 Bartlett's K-squared = 0.30152, df = 2, p-value = 0.8601
 方差分析：
-> mode1_1w=aov(产量~品种)
+> mode1_1w = aov(产量 ~ 品种)
 > summary(mode1_1w)
             Df Sum Sq Mean Sq F value   Pr(>F)    
 品种         2    560  280.00   12.31 0.000158 ***
@@ -204,27 +202,21 @@ Residuals   27    614   22.74
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 由于P=0.000158<0.05,所有品种对产量存在影响。
 5. 效应量分析：
-在单因子方差分析中因子平方和与总体平方和之比，
-它反映在因变量取值的总误差中被因子解释的比例，
-效应量越大说明自变量与因变量之间的关系就越强。
-公式为：
-因子平方和/总平方和
+在单因子方差分析中因子平方和与总体平方和之比，它反映在因变量取值的总误差中被因子解释的比例，效应量越大说明自变量与因变量之间的关系就越强。
+公式为：因子平方和/总平方和
 6. 多重比较：
-对不同处理之间的均值配对比较就是方差分析的多重比较，
-主要方法有Fisher的LSD(最小显著差异)法，Tukey-Krammer的HSD方法。
-
-7，双因子方差分析只从与单因子方差分析不同的角度简单描述：
-7.1，模型较复杂：（按是否考虑交互效应可分为两种情况）
-考虑交互效应的误差分解
+对不同处理之间的均值配对比较就是方差分析的多重比较，主要方法有Fisher的LSD(最小显著差异)法，Tukey-Krammer的HSD方法。
+7. 双因子方差分析只从与单因子方差分析不同的角度简单描述：
+7.1 模型较复杂：（按是否考虑交互效应可分为两种情况）
+考虑交互效应的误差分解:
 总误差 = 因子A的处理误差 + 因子B的处理误差 + 交互作用误差 + 随机误差
 对应于
 总平方和 = 因子A的平方和 + 因子B的平方和 + 交互效应平方和 + 误差平方和
-考虑交互效应的双因子方差分析表
-7.2，R模拟双因子分析：
+7.2 R模拟双因子分析：
 > attach(example8_5)
 The following objects are masked from example8_2:
     产量, 品种, X1
-> par(family ='SimSun')
+> par(family = 'SimSun')
 > boxplot(产量~品种+施肥方式,col=c("gold","green","red"),ylab="产量",xlab="品种+施肥方式", data = example8_5)
 7.3，主效应方差分析表
 > model1_2w<-aov(产量~品种+施肥方式, data=example8_5)
@@ -235,12 +227,10 @@ The following objects are masked from example8_2:
 Residuals   26    134     5.2                     
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-> 
 #主效应方差分析模型的参数估计
 > model1_2w$coefficients
-(Intercept)   品种品种2   品种品种3  施肥方式乙 
+(Intercept)        品种品种2   品种品种3  施肥方式乙 
          80         -10          -2           8 
-> 
 7.4，交叉效应方差分析表：
 > model1_2wi<-aov(产量~品种+施肥方式+品种:施肥方式, data=example8_5)
 > summary(model1_2wi)
@@ -251,13 +241,11 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 Residuals     24  123.6     5.1                     
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-> 
 #交叉效应方差分析的模型的参数估计
 > model1_2wi$coefficients
          (Intercept)            品种品种2            品种品种3 
                 80.2                 -9.6                 -3.0 
           施肥方式乙 品种品种2:施肥方式乙 品种品种3:施肥方式乙 
                  7.6                 -0.8                  2.0 
-> 
 最后，我们可以做模型对比：
 主效应方差分析与交叉效应方差分析模型对比，来佐证交叉效应是否显著。
