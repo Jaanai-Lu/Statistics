@@ -1,0 +1,463 @@
+read.xlsx()
+library(xlsx)
+read.xlsx('original1.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat
+summary(dat)
+na.omit(dat) -> dat
+summary(dat)
+dat[, 8:13][dat[, 8:13] == 0] -> NA
+dat[, 8:13][dat[, 8:13] == 0] -> NA
+dat[, 8:13][dat[, 8:13] == 0] -> NA
+write.xlsx(dat, 'dat.xlsx')
+read.xlsx('dat.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat
+table(dat$Ethnicity)
+dat %>%
+filter(dat$Ethnicity != 达斡尔 & dat$Ethnicity != 鄂温克 & dat$Ethnicity != 回 & dat$Ethnicity != 克尔克斯 & dat$Ethnicity != 满) ->dat
+library(pacman)
+p_load(tidyverse)
+dat %>%
+filter(dat$Ethnicity != 达斡尔 & dat$Ethnicity != 鄂温克 & dat$Ethnicity != 回 & dat$Ethnicity != 克尔克斯 & dat$Ethnicity != 满) ->dat
+dat %>%
+filter(dat$Ethnicity != '达斡尔' & dat$Ethnicity != '鄂温克' & dat$Ethnicity != '回' & dat$Ethnicity != '克尔克斯' & dat$Ethnicity != '满') ->dat
+summary(dat)
+table(dat$Ethnicity)
+write.xlsx(dat, 'data.xlsx')
+table(dat$Ethnicity)
+read.xlsx('data.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat
+str(dat)
+table(dat$sex)
+read.xlsx('data.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat
+str(dat)
+as.factor(dat$sex) -> dat$sex
+as.factor(dat$Ethnicity) -> dat$Ethnicity
+as.factor(dat$是否骨关节炎) -> dat$是否骨关节炎
+as.factor(dat$是否氟骨症) -> dat$是否氟骨症
+write.xlsx(dat, 'data0.xlsx')
+read.xlsx('data0.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat
+str(dat)
+summary(dat)
+subset(dat$是否氟骨症 == 1, dat) -> c
+subset(dat$是否氟骨症 == '1', dat) -> c
+subset(dat$是否氟骨症 == '1') -> c
+subset(dat, dat$是否氟骨症 == '1') -> c
+subset(dat, dat$是否氟骨症 == '0') -> co
+summary(c)
+summary(co)
+table(c$age <= 45)
+table(c$age >= 66)
+table(c$age > 45 & c$age <66)
+table(co$age <= 45)
+table(co$age >= 66)
+table(co$age > 45 & co$age <66)
+table(c$Ethnicity == 汉)
+table(c$Ethnicity == '汉')
+table(c$Ethnicity = '汉')
+table(c$Ethnicity)
+table(co$Ethnicity)
+table(c$日茶氟摄入量.mg. <= 3.5)
+table(c$日茶氟摄入量.mg. >= 7.0)
+table(c$日茶氟摄入量.mg. < 7.0 & c$日茶氟摄入量.mg. > 3.5)
+table(co$日茶氟摄入量.mg. <= 3.5)
+table(co$日茶氟摄入量.mg. >= 7.0)
+table(co$日茶氟摄入量.mg. < 7.0 & co$日茶氟摄入量.mg. > 3.5)
+table(c$UF <= 1.6)
+table(c$UF >= 3.2)
+table(c$UF < 3.2 & c$日茶氟摄入量.mg. > 1.6)
+table(co$UF <= 1.6)
+table(co$UF >= 3.2)
+table(co$UF < 3.2 & co$日茶氟摄入量.mg. > 1.6)
+table(c$是否骨关节炎)
+table(co$是否骨关节炎)
+table(co$UF)
+summary(c)
+table(c$UF)
+table(c$UF <= 1.6)
+table(c$UF < 3.2 & c$UF > 1.6)
+table(co$UF < 3.2 & co$UF > 1.6)
+matrix(c(146, 166, 397, 610), nrow = 2) -> x
+chisq.test(x)
+matrix(c(256, 56, 517, 490), nrow = 2) -> x
+chisq.test(x)
+x
+matrix(c(55, 188, 69, 350, 536, 121), nrow = 3) -> x
+x
+chisq.test(x)
+matrix(c(197, 37, 78, 788, 137, 82), nrow = 3) -> x
+x
+chisq.test(x)
+matrix(c(98, 109, 105, 538, 279, 190), nrow = 3) -> x
+x
+chisq.test(x)
+matrix(c(56, 111, 80, 55, 10, 353, 171, 179, 190, 114), nrow = 5) -> x
+x
+chisq.test(x)
+write.xlsx(dat.xlsx, 'data.xlsx')
+write.xlsx(dat, 'data.xlsx')
+read.xlsx('data.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat
+str(dat)
+read.xlsx('data.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat
+str(dat)
+glm(是否氟骨症 ~ sex + age + UF + Ethnicity + 日茶氟摄入量.mg. + 是否骨关节炎 + FRZB1rs2242070.2危险., data = dat, family = binomial()) -> m1
+summary(m1)
+coef(m1)
+exp(coef(m1))
+exp(confint(m1))
+round(exp(coef(m1)), 2)
+round(exp(confint(m1)), 2)
+glm(是否氟骨症 ~ sex + age + UF + Ethnicity + 日茶氟摄入量.mg. + 是否骨关节炎 + GSTP1rs1695.2危险., data = dat, family = binomial()) -> m1
+summary(m1)
+round(exp(coef(m1)), 2)
+round(exp(confint(m1)), 2)
+glm(是否氟骨症 ~ sex + age + UF + Ethnicity + 日茶氟摄入量.mg. + 是否骨关节炎 + MMP2rs2287074.2危险., data = dat, family = binomial()) -> m1
+summary(m1)
+round(exp(coef(m1)), 2)
+round(exp(confint(m1)), 2)
+glm(是否氟骨症 ~ sex + age + UF + Ethnicity + 日茶氟摄入量.mg. + 是否骨关节炎 + PRLrs1341239.2危险., data = dat, family = binomial()) -> m1
+summary(m1)
+round(exp(coef(m1)), 2)
+round(exp(confint(m1)), 2)
+glm(是否氟骨症 ~ sex + age + UF + Ethnicity + 日茶氟摄入量.mg. + 是否骨关节炎 + VDRrs2228570.2危险., data = dat, family = binomial()) -> m1
+summary(m1)
+round(exp(coef(m1)), 2)
+round(exp(confint(m1)), 2)
+glm(是否氟骨症 ~ sex + age + UF + Ethnicity + 日茶氟摄入量.mg. + 是否骨关节炎 + COMTrs4680.2危险., data = dat, family = binomial()) -> m1
+summary(m1)
+round(exp(coef(m1)), 2)
+round(exp(confint(m1)), 2)
+read.xlsx('data.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat
+str(dat)
+table(dat$GRS1)
+dat$GRS1[dat$GRS1 == 3] -> A
+dat$GRS1[dat$GRS1 == 4] -> A
+dat$GRS1[dat$GRS1 == 5] -> B
+dat$GRS1[dat$GRS1 == 6] -> B
+dat$GRS1[dat$GRS1 == 7] -> C
+dat$GRS1[dat$GRS1 == 8] -> D
+dat$GRS1[dat$GRS1 == 9] -> D
+dat$GRS1[dat$GRS1 == 10] -> E
+table(dat$GRS1)
+write.xlsx(dat, 'dataA.xlsx')
+read.xlsx('data.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat
+str(dat)
+read.xlsx('data2.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat
+str(dat)
+table(dat$GRS1)
+as.factor(dat$GRS1) -> dat$GRS1
+str(dat)
+glm(是否氟骨症 ~ sex + age + UF + Ethnicity + 日茶氟摄入量.mg. + 是否骨关节炎 + GRS1, data = dat, family = binomial()) -> m1
+summary(m1)
+read.xlsx('dataA.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat4
+str(dat)
+str(dat4)
+as.factor(dat4$GRS1) -> dat4$GRS1
+str(dat4)
+read.xlsx('dataA.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat4
+as.factor(dat4$GRS1) -> dat4$GRS1
+str(dat4)
+glm(是否氟骨症 ~ sex + age + UF + Ethnicity + 日茶氟摄入量.mg. + 是否骨关节炎 + GRS1, data = dat, family = binomial()) -> m2
+summary(m2)
+glm(是否氟骨症 ~ sex + age + UF + Ethnicity + 日茶氟摄入量.mg. + 是否骨关节炎 + GRS1, data = dat4, family = binomial()) -> m2
+summary(m2)
+round(exp(coef(m1)), 2)
+round(exp(coef(m2)), 2)
+round(exp(confint(m2)), 2)
+p_load(aod)
+vcov(m2)
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = c(11, 12, 13))
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = c(13))
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = c(11, 12, 13), df=1)
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = 11:13）
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = 11:13)
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = c(11, 12))
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = c(11, 13))
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = c(12, 13))
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = c(12, 13)， df=1)
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = c(12, 13),df=1)
+p_load(PredictABEL)
+data(ExampleData)
+data(ExampleData)
+library(PredictABEL)
+library(PredictABEL)
+library(PredictABEL)
+data(ExampleData)
+head(ExampleData, 5)
+read.xlsx('dataA1.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dc
+str(dc)
+head(dc, 5)
+7 -> cOutcome
+c(1:6) -> cNonGenPred1
+c(1:6) -> cNonGenPred2
+c(1:6) -> cNonGenPred3
+cNonGenPred1
+table(ExampleData)
+table(ExampleData$BaselineAMD)
+table(ExampleData$Smoking)
+table(ExampleData$BMI)
+table(ExampleData$AntioxidentGroup)
+summary(ExampleData)
+table(ExampleData$AntioxidentGroup)
+table(ExampleData$ZincGroup)
+table(ExampleData$Age)
+table(ExampleData$Sex)
+table(ExampleData$Education)
+4 -> cNonGenPredCat1
+cNonGenPredCat1
+4 -> cNonGenPredCat2
+4 -> cNonGenPredCat3
+c(4) -> cNonGenPredCat1
+cNonGenPredCat1
+c(0) -> cGenPred1
+cGenPred1
+c(8:12) -> cGenPred2
+c(8:13) -> cGenPred3
+c(0) -> cGenPredsCat1
+c(0) -> cGenPredsCat2
+c(0) -> cGenPredsCat3
+riskmodel1 <- fitLogRegModel(data=dc, cOutcome=cOutcome,
+cNonGenPreds=cNonGenPred1, cNonGenPredsCat=cNonGenPredCat1,
+cGenPreds=cGenPred1, cGenPredsCat=cGenPredsCat1)
+riskmodel2 <- fitLogRegModel(data=ExampleData, cOutcome=cOutcome,
+cNonGenPreds=cNonGenPred2, cNonGenPredsCat=cNonGenPredCat2,
+cGenPreds=cGenPred2, cGenPredsCat=cGenPredsCat2)
+riskmodel2 <- fitLogRegModel(data=dc, cOutcome=cOutcome,
+cNonGenPreds=cNonGenPred2, cNonGenPredsCat=cNonGenPredCat2,
+cGenPreds=cGenPred2, cGenPredsCat=cGenPredsCat2)
+riskmodel3 <- fitLogRegModel(data=dc, cOutcome=cOutcome,
+cNonGenPreds=cNonGenPred3, cNonGenPredsCat=cNonGenPredCat3,
+cGenPreds=cGenPred3, cGenPredsCat=cGenPredsCat3)
+ExampleModels <- list(riskModel1=riskmodel1, riskModel2=riskmodel2, riskModel3=riskmodel3)
+ExampleModels()$riskModel1 -> riskmodel1
+ExampleModels()$riskModel2 -> riskmodel2
+ExampleModels()$riskModel3 -> riskmodel3
+predRisk(riskmodel1) -> predRisk1
+predRisk(riskmodel2) -> predRisk2
+predRisk(riskmodel3) -> predRisk3
+predRisk3
+predRisk2
+ExampleModels()$riskModel3 -> riskmodel3
+riskmodel3
+riskmodel2
+riskmodel3 <- fitLogRegModel(data=dc, cOutcome=cOutcome,
++                              cNonGenPreds=cNonGenPred3, cNonGenPredsCat=cNonGenPredCat3,
++                              cGenPreds=cGenPred3, cGenPredsCat=cGenPredsCat3)
+riskmodel3 <- fitLogRegModel(data=dc, cOutcome=cOutcome, cNonGenPreds=cNonGenPred3, cNonGenPredsCat=cNonGenPredCat3, cGenPreds=cGenPred3, cGenPredsCat=cGenPredsCat3)
+predRisk(riskmodel3) -> predRisk3
+c("without genetic factors", "with genetic factors", "with COMT rs4680") -> labels
+plotROC(data=dc, cOutcome=cOutcome,
+predrisk=cbind(predRisk1,predRisk2, predRisk3), labels=labels)
+riskmodel2 <- fitLogRegModel(data=dc, cOutcome=cOutcome, cNonGenPreds=cNonGenPred2, cNonGenPredsCat=cNonGenPredCat2, cGenPreds=cGenPred2, cGenPredsCat=cGenPredsCat2)
+riskmodel1 <- fitLogRegModel(data=dc, cOutcome=cOutcome, cNonGenPreds=cNonGenPred1, cNonGenPredsCat=cNonGenPredCat1, cGenPreds=cGenPred1, cGenPredsCat=cGenPredsCat1)
+predRisk(riskmodel2) -> predRisk2
+predRisk(riskmodel1) -> predRisk1
+plotROC(data=dc, cOutcome=cOutcome,
+predrisk=cbind(predRisk1,predRisk2, predRisk3), labels=labels)
+c("without genetic factors", "with genetic factors(5 SNPs)", "with COMT rs4680(6 SNPs)") -> labels
+plotROC(data=dc, cOutcome=cOutcome,
+predrisk=cbind(predRisk1,predRisk2, predRisk3), labels=labels)
+c("without genetic factors", "with genetic factors (5 SNPs)", "with COMT rs4680 (6 SNPs)") -> labels
+plotROC(data=dc, cOutcome=cOutcome,
+predrisk=cbind(predRisk1,predRisk2, predRisk3), labels=labels)
+c(0,.05,.10, .20, 1) -> cutoff
+reclassification(data=dc, cOutcome=cOutcome,
+predrisk1=predRisk1, predrisk2=predRisk2, cutoff)
+reclassification(data=dc, cOutcome=cOutcome,
+predrisk1=predRisk1, predrisk2=predRisk2, cutoff)
+riskmodel1 <- fitLogRegModel(data=dc, cOutcome=cOutcome, cNonGenPreds=cNonGenPred1, cNonGenPredsCat=cNonGenPredCat1, cGenPreds=cGenPred1, cGenPredsCat=cGenPredsCat1)
+riskmodel2 <- fitLogRegModel(data=dc, cOutcome=cOutcome, cNonGenPreds=cNonGenPred2, cNonGenPredsCat=cNonGenPredCat2, cGenPreds=cGenPred2, cGenPredsCat=cGenPredsCat2)
+predRisk(riskmodel1) -> predRisk1
+predRisk(riskmodel2) -> predRisk2
+c(0,.05,.10, .20, 1) -> cutoff
+reclassification(data=dc, cOutcome=cOutcome,
+predrisk1=predRisk1, predrisk2=predRisk2, cutoff)
+c(0, .05, .10, .20, 1) -> cutoff
+reclassification(data=dc, cOutcome=cOutcome,
+predrisk1=predRisk1, predrisk2=predRisk2, cutoff)
+c(7) -> cOutcome
+reclassification(data=dc, cOutcome=cOutcome,
+predrisk1=predRisk1, predrisk2=predRisk2, cutoff)
+str(dc$是否氟骨症)
+table(dc$是否氟骨症)
+as.numeric(dc$是否氟骨症) -> dc$是否氟骨症
+c(7) -> cOutcome
+reclassification(data=dc, cOutcome=cOutcome,
+predrisk1=predRisk1, predrisk2=predRisk2, cutoff)
+as.numeric(dc$sex) -> dc$sex
+as.numeric(dc$age) -> dc$age
+as.numeric(dc$UF) -> dc$UF
+as.numeric(dc$日茶氟摄入量.mg.) -> dc$日茶氟摄入量.mg.
+as.numeric(dc$是否骨关节炎) -> dc$是否骨关节炎
+str(ExampleData)
+str(dc)
+reclassification(data=dc, cOutcome=cOutcome, predrisk1=predRisk1, predrisk2=predRisk2, cutoff)
+str(dc)
+as.numeric(dc$Ethnicity) -> dc$Ethnicity
+7 -> cOutcome
+c(1:6) -> cNonGenPred1
+c(1:6) -> cNonGenPred2
+4 -> cNonGenPredCat1
+4 -> cNonGenPredCat2
+c(0) -> cGenPred1
+c(8:12) -> cGenPred2
+c(0) -> cGenPredsCat1
+c(0) -> cGenPredsCat2
+riskmodel1 <- fitLogRegModel(data=dc, cOutcome=cOutcome,
+cNonGenPreds=cNonGenPred1, cNonGenPredsCat=cNonGenPredCat1,
+cGenPreds=cGenPred1, cGenPredsCat=cGenPredsCat1)
+table(dc$是否氟骨症)
+dc$是否氟骨症[dc$是否氟骨症 == 1] -> 0
+dc$是否氟骨症[dc$是否氟骨症 == 1] -> '0'
+dc$是否氟骨症[dc$是否氟骨症 == 2] -> '1'
+table(dc$是否氟骨症)
+dc$是否氟骨症[dc$是否氟骨症 == '1'] -> '0'
+dc$是否氟骨症[dc$是否氟骨症 == '2'] -> '1'
+table(dc$是否氟骨症)
+ifelse(dc$是否氟骨症 == '1', 0, 1) -> dc$是否氟骨症
+table(dc$是否氟骨症)
+str(dc$是否氟骨症)
+7 -> cOutcome
+reclassification(data=dc, cOutcome=cOutcome, predrisk1=predRisk1, predrisk2=predRisk2, cutoff)
+rangeaxis <- c(0,1)
+groups <- 10
+plotCalibration(data=dc, cOutcome=cOutcome, predRisk=predRisk1,
+groups=groups, rangeaxis=rangeaxis)
+plotCalibration(data=dc, cOutcome=cOutcome, predRisk=predRisk2,
+groups=groups, rangeaxis=rangeaxis)
+opar <- par(no.readonly = TRUE)
+par()
+opar <- par(no.readonly = TRUE)
+par(mfrow=c(1, 2))
+plotCalibration(data=dc, cOutcome=cOutcome, predRisk=predRisk1, groups=groups, rangeaxis=rangeaxis, plottitle = 'Calibration plot (Without GRS)'), legend('bottomright'), legend = c('p = 0.127'), bty = 'n')
+plotCalibration(data=dc, cOutcome=cOutcome, predRisk=predRisk1, groups=groups, rangeaxis=rangeaxis, plottitle = 'Calibration plot (Without GRS)')
+par(opar)
+opar <- par(no.readonly = TRUE)
+par(mfrow=c(2, 1))
+plotCalibration(data=dc, cOutcome=cOutcome, predRisk=predRisk1, groups=groups, rangeaxis=rangeaxis, plottitle = 'Calibration plot (Without GRS)')
+par(opar)
+opar <- par(no.readonly = TRUE)
+par(mfrow=c(1, 2))
+plotCalibration(data=dc, cOutcome=cOutcome, predRisk=predRisk1, groups=groups, rangeaxis=rangeaxis, plottitle = 'Calibration plot (Without GRS)')
+legend('bottomright', c('p = 0.127'), bty = 'n')
+plotCalibration(data=dc, cOutcome=cOutcome, predRisk=predRisk2, groups=groups, rangeaxis=rangeaxis, plottitle = 'Calibration plot (With 5-SNP GRS)')
+legend('bottomright', c('p = 0.650'), bty = 'n')
+par(opar)
+opar <- par(no.readonly = TRUE)
+par(mfrow=c(1, 2))
+plotCalibration(data=dc, cOutcome=cOutcome, predRisk=predRisk1, groups=groups, rangeaxis=rangeaxis, plottitle = 'Calibration plot (Without GRS)')
+legend('center', c('p = 0.127'), bty = 'n')
+legend('right', c('p = 0.127'), bty = 'n')
+legend('top', c('p = 0.127'), bty = 'n')
+par(opar)
+opar <- par(no.readonly = TRUE)
+par(mfrow=c(1, 2))
+plotCalibration(data=dc, cOutcome=cOutcome, predRisk=predRisk1, groups=groups, rangeaxis=rangeaxis, plottitle = 'Calibration plot (Without GRS)')
+legend('top', c('p = 0.13'), bty = 'n', font=2)
+legend('top', c('p = 0.13'), bty = 'n', ps=12)
+legend('top', c('p = 0.13'), bty = 'n', text.font = 2)
+legend('topright', c('p = 0.13'), bty = 'n', text.font = 2)
+legend('right', c('p = 0.13'), bty = 'n', text.font = 2)
+legend('right', c('p = 0.13'), bty = 'n', text.font = 3)
+legend('right', c('p = 0.13'), bty = 'n', text.font = 2, inset = 0.1)
+legend('right', c('p = 0.13'), bty = 'n', text.font = 2, inset = 0.2)
+legend('right', c('p = 0.13'), bty = 'n', text.font = 2, inset = 0.2, text.width = 1.5)
+par(opar)
+opar <- par(no.readonly = TRUE)
+par(mfrow=c(1, 2))
+plotCalibration(data=dc, cOutcome=cOutcome, predRisk=predRisk1, groups=groups, rangeaxis=rangeaxis, plottitle = 'Calibration plot (Without GRS)')
+legend('right', c('p = 0.13'), bty = 'n', text.font = 2, inset = 0.2, text.width = 1.5)
+legend('right', c('p = 0.13'), bty = 'n', text.font = 2, inset = 0.2, text.width = 1.5)
+par(opar)
+opar <- par(no.readonly = TRUE)
+par(mfrow=c(1, 2))
+plotCalibration(data=dc, cOutcome=cOutcome, predRisk=predRisk1, groups=groups, rangeaxis=rangeaxis, plottitle = 'Calibration plot (Without GRS)')
+legend('right', c('p = 0.13'), bty = 'n', text.font = 2, inset = 0.2)
+plotCalibration(data=dc, cOutcome=cOutcome, predRisk=predRisk2, groups=groups, rangeaxis=rangeaxis, plottitle = 'Calibration plot (With 5-SNP GRS)')
+legend('right', c('p = 0.65'), bty = 'n', text.font = 2, inset = 0.2)
+par(opar)
+matrix(c(146, 166, 397, 610), nrow = 2) -> x
+chisq.test(x)
+matrix(c(256, 56, 517, 490), nrow = 2) -> x
+chisq.test(x)
+matrix(c(55, 188, 69, 350, 536, 121), nrow = 3) -> x
+chisq.test(x)
+matrix(c(197, 37, 78, 788, 137, 82), nrow = 3) -> x
+chisq.test(x)
+matrix(c(98, 109, 105, 538, 279, 190), nrow = 3) -> x
+chisq.test(x)
+matrix(c(56, 111, 80, 55, 10, 353, 171, 179, 190, 114), nrow = 5) -> x
+chisq.test(x)
+read.xlsx('dataA.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat5
+str(dat5)
+glm(是否氟骨症 ~ sex + age + GRS1, data = dat5, family = binomial()) -> m3
+table(dat5$GRS1)
+round(exp(coef(m3)), 2)
+as.factor(dat5$GRS1) -> dat5$GRS1
+glm(是否氟骨症 ~ sex + age + GRS1, data = dat5, family = binomial()) -> m3
+round(exp(coef(m3)), 2)
+round(exp(confint(m3)), 2)
+summary(m3)
+vcov(m3)
+vcov(m2)
+wald.test(Sigma = vcov(m3), b=coef(m3), Terms = 4:6)
+wald.test(Sigma = vcov(m3), b=coef(m3), Terms = c(4, 5))
+wald.test(Sigma = vcov(m3), b=coef(m3), Terms = c(4, 6))
+wald.test(Sigma = vcov(m3), b=coef(m3), Terms = c(5, 6))
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = c(11, 12))
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = c(11, 13))
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = c(12, 13))
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = c(11))
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = c(12))
+wald.test(Sigma = vcov(m2), b=coef(m2), Terms = c(13))
+wald.test(Sigma = vcov(m3), b=coef(m3), Terms = c(4, 5))
+wald.test(Sigma = vcov(m3), b=coef(m3), Terms = c(4, 6))
+wald.test(Sigma = vcov(m3), b=coef(m3), Terms = c(5, 6))
+wald.test(Sigma = vcov(m3), b=coef(m3), Terms = c(4))
+wald.test(Sigma = vcov(m3), b=coef(m3), Terms = c(5))
+wald.test(Sigma = vcov(m3), b=coef(m3), Terms = c(6))
+glm(是否氟骨症 ~ sex + age + UF + Ethnicity + 日茶氟摄入量.mg. + 是否骨关节炎 + GRS1, data = dat4, family = binomial()) -> m2
+summary(m2)
+opar <- par(no.readonly = TRUE)
+plotROC(data=dc, cOutcome=cOutcome, predrisk=cbind(predRisk1,predRisk2, predRisk3), labels=labels)
+glm(是否氟骨症 ~ sex + age + UF + Ethnicity + 日茶氟摄入量.mg. + GRS1, data = dat4, family = binomial()) -> m2
+summary(m2)
+read.xlsx('dataAB.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat6
+str(dat6)
+table(dat6$GRS1)
+read.xlsx('dataAB.xlsx', sheetIndex = 'Sheet1', encoding = 'UTF-8') -> dat6
+str(dat6)
+as.factor(dat6$GRS1) -> dat6$GRS1
+glm(是否氟骨症 ~ sex + age + UF + Ethnicity + 日茶氟摄入量.mg. + 是否骨关节炎 + MMP2rs2287074.2危险. + GRS1, data = dat, family = binomial()) -> m2
+summary(m2)
+p_load(pROC)
+roc(dc$是否氟骨症, predRisk1) -> p1
+roc(dc$是否氟骨症, predRisk1, smoothed = TRUE, ci = TRUE,
+ci.alpha = 0.95, stratified = FALSE, plot = TRUE, auc.polygon = TRUE,
+max.auc.polygon = TRUE, grid=TRUE, print.auc=TRUE, show.thres = TRUE) -> p1
+roc(dc$是否氟骨症, predRisk1, smoothed = TRUE, ci = TRUE,
+ci.alpha = 0.95, stratified = FALSE, plot = TRUE, auc.polygon = TRUE,
+max.auc.polygon = TRUE, print.auc=TRUE, show.thres = TRUE) -> p1
+roc(dc$是否氟骨症, predRisk1, smoothed = TRUE, ci = TRUE,
+ci.alpha = 0.95, plot = TRUE, auc.polygon = TRUE,
+max.auc.polygon = TRUE, print.auc=TRUE, show.thres = TRUE) -> p1
+roc(dc$是否氟骨症, predRisk1, smoothed = TRUE, ci = TRUE,
+ci.alpha = 0.95, stratified = FALSE, plot = TRUE, auc.polygon = TRUE,
+max.auc.polygon = TRUE, grid=FALSE, print.auc=TRUE, show.thres = TRUE) -> p1
+roc(dc$是否氟骨症, predRisk1, smoothed = TRUE, ci = TRUE,
+ci.alpha = 0.95, stratified = FALSE, plot = TRUE, auc.polygon = TRUE,
+max.auc.polygon = FALSE, grid=FALSE, print.auc=TRUE, show.thres = TRUE) -> p1
+roc(dc$是否氟骨症, predRisk1, smoothed = TRUE, ci = TRUE,
+ci.alpha = 0.95, stratified = FALSE, plot = TRUE, auc.polygon = FALSE,
+max.auc.polygon = TRUE, grid=FALSE, print.auc=TRUE, show.thres = TRUE) -> p1
+roc(dc$是否氟骨症, predRisk1, smoothed = TRUE, ci = TRUE,
+ci.alpha = 0.95, stratified = FALSE, plot = TRUE, auc.polygon = TRUE,
+max.auc.polygon = TRUE, grid=FALSE, print.auc=TRUE, show.thres = FALSE) -> p1
+sens.ci <- ci.se(p1)
+plot(sens.ci, type="shape", col="lightblue")
+opar <- par(no.readonly = TRUE)
+par(mfrow=c(1, 2))
+roc(dc$是否氟骨症, predRisk1, smoothed = TRUE, ci = TRUE, ci.alpha = 0.95, stratified = FALSE, plot = TRUE, main='ROC plot', sub='A', col='1', auc.polygon = TRUE, max.auc.polygon = TRUE, grid=FALSE, print.auc=TRUE, show.thres = FALSE) -> p1
+par(opar)
+roc(dc$是否氟骨症, predRisk2, smoothed = TRUE, ci = TRUE, ci.alpha = 0.95, stratified = FALSE, plot = TRUE, main='ROC plot', sub='A', col='1', auc.polygon = TRUE, max.auc.polygon = TRUE, grid=FALSE, print.auc=TRUE, show.thres = FALSE) -> p2
+roc.test(p1, p2)
+roc(dc$是否氟骨症, predRisk3, smoothed = TRUE, ci = TRUE, ci.alpha = 0.95, stratified = FALSE, plot = TRUE, main='ROC plot', sub='A', col='1', auc.polygon = TRUE, max.auc.polygon = TRUE, grid=FALSE, print.auc=TRUE, show.thres = FALSE) -> p3
+roc.test(p2, p3)
+roc.test(p1, p3)
+savehistory("~/Downloads/RStudio directory/GRS.Rhistory")
