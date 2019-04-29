@@ -1,13 +1,18 @@
-主要讲解如何使用summarise函数完成数据的汇总。
-在开讲之前，我们需要理解，什么叫做汇总。
+如何使用summarise函数完成数据的汇总？
+我们需要理解什么叫做汇总：
 举个例子，如果我们现在对学校的学生身高进行了测量，我们需要得到学生的平均身高，
 那么我们把所有学生的身高加起来，除以学生的数量，得到身高平均值，这就完成了一个汇总计算。
-汇总计算的方式多种多样，比如我们要得到最高的身高是多少，最低的身高是多少，身高是中位数是多少，这些都是汇总计算。
-在数据表中，数据的汇总的实质就是：我们根据一列数据（本质来说是一个向量），得到一个值，来反映总体在这个属性上的特征。
+汇总计算的方式多种多样，比如我们要得到最高的身高是多少，最低的身高是多少，身高的中位数是多少，这些都是汇总计算。
+在数据表中，数据的汇总的实质就是：
+我们根据一列数据（本质来说是一个向量），得到一个值，来反映总体在这个属性上的特征。
+
 这里用到R语言自带cars数据集，下面我们先加载需要的包，并把cars转化为tibble，存放在cars1变量中。
-它只包含两列数据，第一列是汽车的即时速度，第二列是这个速度下要停止下来会继续跑多远。
+它只包含两列数据，
+第一列是汽车的即时速度，第二列是这个速度下要停止下来会继续跑多远。
+
 library(tidyverse)
 cars %>% as_tibble() -> cars1
+
 cars1
 ## # A tibble: 50 x 2
 ##    speed  dist
@@ -23,9 +28,12 @@ cars1
 ##  9    10    34
 ## 10    11    17
 ## # ... with 40 more rows
-汇总基本范式
+
+汇总基本范式：
+summarise偏向于了解数据的集中趋势信息，如最大值、最小值、均值、中位数等。
 均值和中位数代表了数据的一般水平，是重要的衡量指标。
-下面我们看看如何汇总测试的平均值和中位数。
+下面我们看看如何汇总均值和中位数。
+
 #平均速度
 cars1 %>%
   summarise(mean(speed))
@@ -33,6 +41,7 @@ cars1 %>%
 ##   `mean(speed)`
 ##           <dbl>
 ## 1          15.4
+
 #速度的中位数
 cars1 %>% 
   summarise(median(speed))
@@ -40,16 +49,19 @@ cars1 %>% 
 ##   `median(speed)`
 ##             <dbl>
 ## 1              15
-注意，我们这里没有给最后的结果命名，因此结果中默认原来的值为命名，也就是说mean(speed)成为了列的名称，
+
+注意：我们这里没有给最后的结果命名，因此结果中默认原来的值为命名，也就是说 mean(speed) 成为了列的名称，
 事实上我们可以通过赋值来改变它，例子如下：
+
 cars1 %>%
   summarise(speed_avg = mean(speed))
 ## # A tibble: 1 x 1
 ##   speed_avg
 ##       <dbl>
 ## 1      15.4
-现在得到结果的名称就变为speed_avg了.
-汇总函数总结
+现在得到结果的名称就变为speed_avg了。
+
+汇总函数总结：
 基本模式与上面一致，比如我们要知道速度这一列的标准差：
 cars1 %>% 
   summarise(speed_sd = sd(speed))
@@ -57,18 +69,20 @@ cars1 %>% 
 ##   speed_sd
 ##      <dbl>
 ## 1     5.29
-与求均值的例子相比较，我们只是改变了最后的列名称speed_sd，以及求值函数sd。
-我们会通过变化求值函数来进行不同的汇总，首先给大家介绍不同的汇总求值函数。
+
+我们会通过变化求值函数来进行不同的汇总，不同的汇总求值函数：
 中心化汇总：平均值（mean）、中位数（median）
 离散化汇总：标准差（sd）、四分位距（IQR）、绝对中位差（mad）
 范围汇总：最大值（max）、最小值（min）、分位数（quantile）
 位置汇总：首位（first）、末位（last）、自定义位置（nth）
 计数汇总：简单计数（n）、种类计数（n_distinct）
 逻辑汇总：最少满足（any）、全部满足（all）
+
 汇总函数示例
-上面我们介绍的汇总函数已经能够满足较为丰富的汇总功能，这里会为每个汇总给出范例，
-并对一些无法“见名知意”的函数进行具体的介绍。这里我们会统一对cars1的speed列进行操作。
-中心化汇总
+上面介绍的汇总函数已经能够满足较为丰富的汇总功能，这里会为每个汇总给出范例，并对一些无法“见名知意”的函数进行具体的介绍。
+这里统一对cars1的speed列进行操作。
+
+中心化汇总：
 #均值
 cars1 %>% 
   summarise(speed.avg = mean(speed))
@@ -76,6 +90,7 @@ cars1 %>% 
 ##   speed.avg
 ##       <dbl>
 ## 1      15.4
+
 #中位数
 cars1 %>% 
   summarise(speed.median = median(speed))
@@ -83,10 +98,10 @@ cars1 %>% 
 ##   speed.median
 ##          <dbl>
 ## 1           15
-需要注意的是，R语言对缺失值是非常敏感的，也就说如果数据中有缺失值，那么汇总返回的平均值也会是缺失值。
-如果需要忽略缺失值，应该在mean函数中设置na.rm = T，
-也就是用以下语句：cars %>% summarise(speed.avg = mean(speed, na.rm = T)).
-离散化汇总
+# 需要注意的是，R语言对缺失值是非常敏感的，也就说如果数据中有缺失值，那么汇总返回的平均值也会是缺失值。
+# 如果需要忽略缺失值，应该在mean函数中设置na.rm = T，也就是用以下语句：cars %>% summarise(speed.avg = mean(speed, na.rm = T))
+
+离散化汇总：
 #标准差
 cars1 %>% 
   summarise(speed.sd = sd(speed))
@@ -94,6 +109,7 @@ cars1 %>% 
 ##   speed.sd
 ##      <dbl>
 ## 1     5.29
+
 #IQR
 cars1 %>% 
   summarise(speed.IQR = IQR(speed))
@@ -101,6 +117,7 @@ cars1 %>% 
 ##   speed.IQR
 ##       <dbl>
 ## 1         7
+
 #MAD
 cars1 %>% 
   summarise(speed.MAD = mad(speed))
@@ -108,10 +125,10 @@ cars1 %>% 
 ##   speed.MAD
 ##       <dbl>
 ## 1      5.93
-IQR，四分位距，具体计算方法为IQR(x)= quantile(x, 3/4) - quantile(x, 1/4)，
-也就是处于四分之三位置的数值减去处于四分之一位置的数值的差值。
-MAD，绝对中位差，指的是所有数值减去中位数的绝对值，然后相加的结果。
-范围汇总
+# IQR，四分位距，具体计算方法为IQR(x)= quantile(x, 3/4) - quantile(x, 1/4)，也就是处于四分之三位置的数值减去处于四分之一位置的数值的差值。
+# MAD，绝对中位差，指的是所有数值减去中位数的绝对值，然后相加的结果。
+
+范围汇总：
 #最大值
 cars1 %>% 
   summarise(speed.max = max(speed))
@@ -119,6 +136,7 @@ cars1 %>% 
 ##   speed.max
 ##       <dbl>
 ## 1        25
+
 #最小值
 cars1 %>% 
   summarise(speed.min = min(speed))
@@ -126,6 +144,7 @@ cars1 %>% 
 ##   speed.min
 ##       <dbl>
 ## 1         4
+
 #50%分位数
 cars1 %>% 
   summarise(speed.quantile = quantile(speed,0.5))
@@ -133,9 +152,10 @@ cars1 %>% 
 ##   speed.quantile
 ##            <dbl>
 ## 1             15
-注意分位数需要设定一个唯一值，对于汇总功能而言，一列只能汇总为一个值而不是多个值。
-另外，这里设置为0.5，那么就会求50%分位数，这个可以自定义选择。
-位置汇总
+# 注意分位数需要设定一个唯一值，对于汇总功能而言，一列只能汇总为一个值而不是多个值。
+# 另外，这里设置为0.5，那么就会求50%分位数，这个可以自定义选择。
+
+位置汇总：
 #首行
 cars1 %>% 
   summarise(speed.1st = first(speed))
@@ -143,6 +163,7 @@ cars1 %>% 
 ##   speed.1st
 ##       <dbl>
 ## 1         4
+
 #末行
 cars1 %>% 
   summarise(speed.last = last(speed))
@@ -150,6 +171,7 @@ cars1 %>% 
 ##   speed.last
 ##        <dbl>
 ## 1         25
+
 #第3行
 cars1 %>% 
   summarise(speed.nth = nth(speed,3))
@@ -157,7 +179,8 @@ cars1 %>% 
 ##   speed.nth
 ##       <dbl>
 ## 1         7
-计算汇总
+
+计算汇总：
 #行数
 cars1 %>% 
   summarise(row.number = n())
@@ -165,6 +188,7 @@ cars1 %>%
 ##   row.number
 ##        <int>
 ## 1         50
+
 #检测了多少种速度
 cars1 %>% 
   summarise(speed.n = n_distinct(speed))
@@ -172,12 +196,14 @@ cars1 %>% 
 12##   speed.n
 13##     <int>
 14## 1      19
-n()其实就是统计了表格的总行数，里面不需要放任何东西。
-但是如果想要知道试验中一共检测了多少种速度，那么就需要用到n_distinct函数，它会统计一共有多少个不同的速度。
-逻辑汇总
+# n()其实就是统计了表格的总行数，里面不需要放任何东西。
+# 但是如果想要知道试验中一共检测了多少种速度，那么就需要用到n_distinct函数，它会统计一共有多少个不同的速度。
+
+逻辑汇总：
 这个汇总方法的本质是，看看向量中是不是有任意一个能够满足要求，或者是否能够全部满足要求。
 例如，学校学生身高是不是全部的同学都超过了1米？有没有任何同学的身高达到了两米？
 需要注意的是，这个汇总会返回一个逻辑型结果，也就是TRUE或者FALSE。
+
 下面还是用这个数据集来举例：
 #speed至少有一个是大于10的吗？
 cars1 %>%
@@ -186,6 +212,7 @@ cars1 %>%
 ##   `any(speed > 10)`
 ##   <lgl>            
 ## 1 TRUE
+
 #speed中全部数值都大于10吗？
 cars1 %>%
   summarise(all(speed > 10))
@@ -193,6 +220,42 @@ cars1 %>%
 ##   `all(speed > 10)`
 ##   <lgl>            
 ## 1 FALSE
-总结
-这里介绍了汇总的基本概念，并通过变换求值函数，实现各种不同的汇总操作。
-但凡是能够对向量进行计算并返回单一值的函数，都能够作为汇总的求值函数，我们甚至可以自定义求值函数。
+
+又比如iris中，对各类花的Sepal.Length，求均值
+iris %>% 
+  group_by(Species)%>%
+  summarise(mean(Sepal.Length))
+
+  Species    `mean(Sepal.Length)`
+1 setosa                     5.01
+2 versicolor                 5.94
+3 virginica                  6.59
+
+针对summarise，还有3个相关的函数：分别是summarise_all、summarise_at、summarise_if
+summarise_all，会对数据集中的所有变量进行fun(函数)求解
+  summarise_all(iris[,-3:-5],c("mean","min"), na.rm = TRUE)
+  #获取第3~5行以外（确实是这么写），所有列的均值和最小值
+  Sepal.Length_mean Sepal.Width_mean Sepal.Length_min Sepal.Width_min
+1 5.843333         3.057333              4.3               2
+
+  summarise_all(iris[,-3:-5],funs(Q3 = quantile,med = median), probs = 0.75)
+  #获取第3~5行以外，所有列的中位数和3/4分位数
+  Sepal.Length_Q3 Sepal.Width_Q3 Sepal.Length_med Sepal.Width_med
+1         6.4            3.3              5.8               3
+
+summarise_at，则和“select”相似，可以"at"到具体的变量：
+# vars用于select variables
+iris %>% summarise_at(vars("Sepal.Length":"Petal.Length"), mean, na.rm = sTRUE)
+iris %>% summarise_at(vars(matches("Length")), mean, na.rm = TRUE)
+iris %>% summarise_at(vars(ends_with("Length")), mean, na.rm = TRUE)
+iris %>% summarise_at(vars(starts_with("Sepal")), mean, na.rm = TRUE)
+iris %>% summarise_at(vars(contains("Sepal")), mean, na.rm = TRUE)
+# 是否有其中的某一个
+iris %>% summarise_at(vars(one_of("Sepal.Length","Sepal.Width","Sepal.Width2")), mean, na.rm = TRUE)
+
+summarise_if，当变量类型满足的时候，进行summarise总结
+iris %>% summarise_if(is.numeric, mean, na.rm = TRUE)
+
+  Sepal.Length Sepal.Width Petal.Length Petal.Width
+1     5.843333    3.057333        3.758    1.199333
+
