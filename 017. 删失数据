@@ -1,22 +1,31 @@
+The Difference Between Right-, Left- and Interval-Censored Data：
+
 What is censored data?
 When you perform reliability analysis, you may not have exact failure times for all items. 
 In fact, lifetime data are often "censored." 
 Using the light bulb example, perhaps not all the light bulbs have failed by the time your study ends. 
 The time data for those bulbs that have not yet failed are referred to as censored.
-It is important to include the censored observations in your analysis 
+It is important to include the censored observations in your analysis, 
 because the fact that these items have not yet failed has a big impact on your reliability estimates.
-Right-censored data
+
+Right-censored data：
 Let’s move from light bulbs to newborns.
 Suppose you’re conducting a study on pregnancy duration. 
-You’re ready to complete the study and run your analysis, but some women in the study are still pregnant, 
-so you don’t know exactly how long their pregnancies will last. These observations would be right-censored. 
+You’re ready to complete the study and run your analysis, 
+but some women in the study are still pregnant, 
+so you don’t know exactly how long their pregnancies will last. 
+These observations would be right-censored. 
 The “failure,” or birth in this case, will occur after the recorded time.
-Left-censored data
+
+Left-censored data：
 Now suppose you survey some women in your study at the 250-day mark, but they already had their babies. 
 You know they had their babies before 250 days, but don’t know exactly when. 
 These are therefore left-censored observations, where the “failure” occurred before a particular time.
-Interval-censored data
-If we don’t know exactly when some babies were born but we know it was within some interval of time, 
+
+Interval-censored data：
+If we don’t know exactly when some babies were born,
+but we know it was within some interval of time, 
 these observations would be interval-censored. 
 We know the “failure” occurred within some given time period. 
-For example, we might survey expectant mothers every 7 days and then count the number who had a baby within that given week.
+For example, we might survey expectant mothers every 7 days,
+and then count the number who had a baby within that given week.
