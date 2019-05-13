@@ -1,0 +1,62 @@
+R语言金融基础：tidyquant获取数据（标普500与纳斯达克）
+今天来拔草tidyquant包。该包简洁易懂，方便实用，是做金融回测重要的工具。
+这个包的详细介绍见：https://business-science.github.io/tidyquant/index.html
+
+先加载一下：
+library(pacman)
+p_load(tidyquant)
+随后，我们获取标普500指数和纳斯达克挂牌公司信息。
+这里先对两者概念做简要介绍然后再进行演示。
+S&P500，中文全称为标准普尔500指数，是记录美国500家上市公司的一个股票指数。
+这个股票指数由标准普尔公司创建并维护。 
+标准普尔是世界权威金融分析机构，由普尔先生(Mr Henry Varnum Poor)于1860年创立。
+标准普尔由普尔出版公司和标准统计公司于1941年合并而成。
+标准普尔为投资者提供信用评级、独立分析研究、投资咨询等服务，
+其中包括反映全球股市表现的标准普尔全球1200指数和为美国投资组合指数的基准的标准普尔500指数等一系列指数。
+然后我们在R中直接获得标普500指数的信息：
+tq_index("SP500") -> a
+a
+
+# A tibble: 505 x 5
+   symbol company                         weight sector                 shares_held
+   <chr>  <chr>                            <dbl> <chr>                        <dbl>
+ 1 MSFT   Microsoft Corporation           0.0408 Information Technology    88132910
+ 2 AAPL   Apple Inc.                      0.0366 Information Technology    51457600
+ 3 AMZN   Amazon.com Inc.                 0.0324 Consumer Discretionary     4739754
+ 4 FB     Facebook Inc. Class A           0.0188 Communication Services    27403264
+ 5 BRK.B  Berkshire Hathaway Inc. Class B 0.0172 Financials                22337340
+ 6 JPM    JPMorgan Chase & Co.            0.0155 Financials                37612196
+ 7 JNJ    Johnson & Johnson               0.0153 Health Care               30592244
+ 8 GOOG   Alphabet Inc. Class C           0.0149 Communication Services     3531023
+ 9 GOOGL  Alphabet Inc. Class A           0.0146 Communication Services     3438793
+10 XOM    Exxon Mobil Corporation         0.0139 Energy                    48671748
+# ... with 495 more rows
+可以看到，显示的表格是一个tibble，包括公司代号、公司名称、股票在指数中所占比例、公司类型和股票持有量。
+纳斯达克(NASDAQ，National Association of Securities Dealers Automated Quotations)又称纳指、美国科技指数，
+是美国全国证券交易商协会于1968年着手创建的自动报价系统名称的英文简称。
+纳斯达克的特点是收集和发布场外交易非上市股票的证券商报价。
+它现已成为全球最大的证券交易市场之一。
+目前的上市公司有5200多家。
+纳斯达克又是全世界第一个采用电子交易的股市，它在55个国家和地区设有26万多个计算机销售终端。
+tq_exchange("NASDAQ") -> b
+b
+
+# A tibble: 3,475 x 7
+   symbol company                   last.sale.price market.cap ipo.year sector       industry                      
+   <chr>  <chr>                               <dbl> <chr>         <dbl> <chr>        <chr>                         
+ 1 YI     111, Inc.                            8.15 $664.58M       2018 Health Care  Medical/Nursing Services      
+ 2 PIH    1347 Property Insurance ~            5.05 $30.36M        2014 Finance      Property-Casualty Insurers    
+ 3 PIHPP  1347 Property Insurance ~           24.8  $17.33M          NA Finance      Property-Casualty Insurers    
+ 4 TURN   180 Degree Capital Corp.             1.94 $60.37M          NA Finance      Finance/Investors Services    
+ 5 FLWS   1-800 FLOWERS.COM, Inc.             21.3  $1.37B         1999 Consumer Se~ Other Specialty Stores        
+ 6 BCOW   1895 Bancorp of Wisconsi~            9.61 $46.86M        2019 Finance      Banks                         
+ 7 FCCY   1st Constitution Bancorp~           18.8  $162.05M         NA Finance      Savings Institutions          
+ 8 SRCE   1st Source Corporation              46.8  $1.2B            NA Finance      Major Banks                   
+ 9 VNET   21Vianet Group, Inc.                 7.86 $883.41M       2011 Technology   Computer Software: Programmin~
+10 TWOU   2U, Inc.                            60.5  $3.54B         2014 Technology   Computer Software: Prepackage~
+# ... with 3,465 more rows
+返回的tibble包含公司代码、公司名称、当前成交价、市场总值、发行年、所属分类和工业类型信息。
+这些数据能够为投资者提供有价值的参考，从而在宏观的层面上对大市有所了解。
+这两个函数还能够获得其他的数据源，
+详见官网介绍：https://business-science.github.io/tidyquant/articles/TQ01-core-functions-in-tidyquant.html
+
