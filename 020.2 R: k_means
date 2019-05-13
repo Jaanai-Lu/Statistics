@@ -1,0 +1,20 @@
+# 在R中k-means的函数格式是kmeans(x, centers), x为数值数据集（矩阵或数据框）, centers为要提取的聚类数目。
+# 不像层次聚类方法，k-means要求事先确定要提取的聚类个数（NbClust包可以用来作为参考），
+# 由于k-means在开始要随机选择k个中心点，因而每次调用函数时可能获得不同的方案，使用set.seed()可以保证结果是可复制的。
+# 此外，聚类方法对初始中心值得选择也很敏感，
+# kmeans()有一个nstart选项尝试多种初始配置并输出最好的一个，例如加上nstart=25会生成15个初始配置。
+
+# 这里处理包含178种意大利葡萄酒中13种化学成分的数据集
+# 数据集通过rattle包获得
+library(pacman)
+p_load(rattle)
+data(wine, package='rattle')
+head(wine)
+# 去掉第一列变量（葡萄酒类型）进行聚类，看看是否可以恢复已知的数据结构
+wine[-1] -> a
+a
+head(a)
+# 因为变量值变化很大，所以在聚类前要将其标准化
+scale(a) -> df
+head(df)
+
