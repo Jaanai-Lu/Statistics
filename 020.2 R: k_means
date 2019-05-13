@@ -17,4 +17,45 @@ head(a)
 # 因为变量值变化很大，所以在聚类前要将其标准化
 scale(a) -> df
 head(df)
+# nc是要考虑的最大聚类数，seed为一个随机数种子
+wssplot <- function(data, nc=15, seed=1234){
+               wss <- (nrow(data)-1)*sum(apply(data, 2, var))
+               for (i in 2:nc){
+                   set.seed(seed)
+                   wss[i] <- sum(kmeans(data, centers = i)$withinss)}
+               plot(1:nc, wss, type = 'b', xlab = 'Number of Clusters',
+                    ylab = 'Within groups sum of squares')}
+# 使用wssplot()和NbClust()确定聚类的个数
+# 从wssplot()作的图来看，组内的平房总和有一个明显的下降趋势，且在某个拐点处下降的速度减弱
+# 即意味着拐点对应的聚类树木可能对于数据来说是一个很好的拟合
+# NbClust包中的26种指标中有15种建议类别数为3的聚类方案
+# 需要注意的是并非所有指标都可以计算每个数据集
+wssplot(df)
+p_load(NbClust)
+set.seed(1234)
+devAskNewPage(ask = TRUE)
+NbClust(df, min.nc = 2, max.nc = 15, method = 'kmeans') -> nc
+table(nc$Best.n[1,])
+barplot(table(nc$Best.n[1,]), xlab = "Number of Clusters", ylab = "Number of Criteria", 
+main = "Number of Clusters Chosen by 26 Criteria")
+# 进行K均值聚类分析
+set.seed(1234)
+kmeans(df, 3, nstart=25) -> fit.km
+# 每类中数据点的个数
+fit.km$size
+# centers: a matrix of cluster centers
+fit.km$centers
+# 因为输出的聚类质心是基于标准化的数据，
+# 所以可使用aggregate()和类的成员来得到原始矩阵中每一类的变量均值
+aggregate(wine[-1], by=list(cluster=fit.km$cluster), mean)
+# k-means可以很好地解释类型变量中真正的数据结构吗？
+# 交叉列表类型（即葡萄酒品种）和类成员由下面的代码表示
+table(wine$Type, fit.km$cluster) -> ct.km
+ct.km
+# 也可以使用flexclust包中的Rand index来量化类型变量和类之间的协议
+p_load(flexclust)
+randIndex(ct.km)
+# 调整的Rand index为两种划分提供了一种衡量两个分区之间的协定，即调整后机会的量度
+# 它的变化范围是从-1（不同意）到1（完全同意）
+# 葡萄酒品种类型和类的解决方案之间的协定是0.9
 
