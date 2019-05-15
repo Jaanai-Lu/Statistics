@@ -1,4 +1,5 @@
-R语言金融基础：tidyquant获取数据（标普500与纳斯达克）
+R语言金融基础：
+1. tidyquant获取数据（标普500与纳斯达克）
 今天来拔草tidyquant包。该包简洁易懂，方便实用，是做金融回测重要的工具。
 这个包的详细介绍见：https://business-science.github.io/tidyquant/index.html
 
@@ -60,3 +61,253 @@ b
 这两个函数还能够获得其他的数据源，
 详见官网介绍：https://business-science.github.io/tidyquant/articles/TQ01-core-functions-in-tidyquant.html
 
+2. tidyquant获取数据（股票每日行情）
+tidyquant除了能够获得大市的信息以外，还能够对个股行情进行采集。
+以苹果公司为例：
+
+library(tidyquant)
+# 输入股票代码APPL，注明需要获取的是“stock.prices”股价信息，获得自1990年1月1日以来苹果股票价格的变化
+tq_get("AAPL", get = "stock.prices", from = "1990-01-01") -> aapl_prices
+aapl_prices 
+
+# A tibble: 7,391 x 7
+   date        open  high   low close   volume adjusted
+   <date>     <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl>
+ 1 1990-01-02  1.26  1.34  1.25  1.33 45799600    0.122
+ 2 1990-01-03  1.36  1.36  1.34  1.34 51998800    0.123
+ 3 1990-01-04  1.37  1.38  1.33  1.34 55378400    0.123
+ 4 1990-01-05  1.35  1.37  1.32  1.35 30828000    0.124
+ 5 1990-01-08  1.34  1.36  1.32  1.36 25393200    0.124
+ 6 1990-01-09  1.36  1.36  1.32  1.34 21534800    0.123
+ 7 1990-01-10  1.34  1.34  1.28  1.29 49929600    0.118
+ 8 1990-01-11  1.29  1.29  1.23  1.23 52763200    0.113
+ 9 1990-01-12  1.22  1.24  1.21  1.23 42974400    0.113
+10 1990-01-15  1.23  1.28  1.22  1.22 40434800    0.112
+# ... with 7,381 more rows
+
+可以看到结果里面有日期、开盘价、最高价、最低价、收盘价、成交量和矫正收盘指数（adjusted）。
+很多指标都很好理解，但是对于adjusted我们需要进一步解释
+原文如下：
+If you're a new investor, you may have heard the terms "closing price" and "adjusted closing price". 
+These two terms refer to slightly different ways of valuing stocks. 
+The closing price of a stock is the price of that stock at the close of the trading day. 
+The adjusted closing price is a more complex analysis that uses the closing price as a starting point, 
+but it takes into account factors such as dividends, stock splits and new stock offerings to determine a value. 
+The adjusted closing price represents a more accurate reflection of a stock's value, 
+since distributions and new offerings can alter the closing price.
+也就是说，矫正收盘价是考虑了股息、分股和增股之后，股票收盘时候价格的变化。
+tidyquant也支持查询股息和分股信息：
+
+# 查看股息
+tq_get("AAPL", get = "dividends", from = "1990-01-01") -> appl_divs
+aapl_divs
+
+# A tibble: 51 x 2
+   date       dividends
+   <date>         <dbl>
+ 1 1990-02-16      0.11
+ 2 1990-05-21      0.11
+ 3 1990-08-20      0.11
+ 4 1990-11-16      0.12
+ 5 1991-02-15      0.12
+ 6 1991-05-20      0.12
+ 7 1991-08-19      0.12
+ 8 1991-11-18      0.12
+ 9 1992-02-14      0.12
+10 1992-06-01      0.12
+# ... with 41 more rows
+
+# 查看分股
+tq_get("AAPL", get = "splits", from = "1990-01-01") -> aapl_splits
+aapl_splits
+
+# A tibble: 3 x 2
+  date       splits
+  <date>      <dbl>
+1 2000-06-21      2
+2 2005-02-28      2
+3 2014-06-09      7
+也就是说，自1990年以来，苹果公司在2000、2005和2014年进行了分股，以增加其流动性。
+与此同时，苹果在这个时间段内进行了51次分红。
+
+不过对公共数据的请求有时候要依赖网络，如果失败了，请再试一次。
+这个工具对国外网络的稳定性具有很强的依赖性，主要是从雅虎金融网址直接抓取的数据。
+
+3. tidyquant数据整理（滑窗建模）
+之前模拟风控模型的时候，曾经想要做滑动窗口模型。
+因为当时我相信一个前提假设（现在也相信着）：
+随着时间的变化，每个变量的重要程度也会改变，
+而它们的组合关系的重要程度也会改变，符合的模型也会变化，模型参数最优值也会变化。
+时间窗口的确定，需要不断地尝试。
+模型哪些比较好，是否需要集成模型，
+（发现有人把基于树的叫做集成模型，那好吧...但是集成本身的概念是多模型融合决策吧...）
+哪些变量应该放在一起做特征工程，这些事变化过程真的是太多了，这使得水越来越深。
+在科学研究中，往往称之为复杂性问题，也就是很难找到一个放之四海而皆准的规则（如果有，数据挖掘工程师或将失业）。
+不过再复杂的东西，都是由简单的要素构成的。
+越是想要追求精准，就越是要忠实于基本的东西。
+因此就时间变动的特征，这里使用tidyquant进行滑动窗口建模。
+下面举例说明：
+首先用之前介绍过的tq_get来下载股票信息。
+下面的FB代表Facebook的股票信息，包括2016年的每日行情（OHLC）。
+与此同时，我们还会下载XLK数据，它是Technology Select Sector SPDR® ETF的简称，中文译作高科技指数。
+类似于指数基金的一篮子股票组合，那么XLK则是针对科技股的股票组合，最后构成一个指数基金。
+下面，我们要根据Facebook和XLK的行情，判断两者之间是否存在线性关系。
+先下载数据：
+
+library(tidyquant)
+fb_returns <- tq_get("FB", get  = "stock.prices", from = "2016-01-01", to   = "2016-12-31") %>%
+  tq_transmute(select = adjusted, 
+               mutate_fun = periodReturn, 
+               period = "weekly", 
+               col_rename = "fb.returns")
+
+xlk_returns <- tq_get("XLK", from = "2016-01-01", to = "2016-12-31") %>%
+  tq_transmute(select = adjusted, 
+               mutate_fun = periodReturn, 
+               period = "weekly", 
+               col_rename = "xlk.returns")
+               
+# 这里在下载的同时，我们直接用tq_transmute对得到的tibble进行修饰，
+# 具体来说就是把矫正的收盘价转化为周的数据，并重新命名。
+# 看看数据是什么样子的：
+
+ fb_returns
+# A tibble: 52 x 2
+   date       fb.returns
+   <date>          <dbl>
+ 1 2016-01-08   -0.0478 
+ 2 2016-01-15   -0.0242 
+ 3 2016-01-22    0.0313 
+ 4 2016-01-29    0.146  
+ 5 2016-02-05   -0.0725 
+ 6 2016-02-12   -0.0198 
+ 7 2016-02-19    0.0251 
+ 8 2016-02-26    0.0320 
+ 9 2016-03-04    0.00436
+10 2016-03-11    0.00941
+# ... with 42 more rows
+
+ xlk_returns
+# A tibble: 52 x 2
+   date       xlk.returns
+   <date>           <dbl>
+ 1 2016-01-08    -0.0516 
+ 2 2016-01-15    -0.0187 
+ 3 2016-01-22     0.0264 
+ 4 2016-01-29     0.0213 
+ 5 2016-02-05    -0.0422 
+ 6 2016-02-12    -0.00582
+ 7 2016-02-19     0.0354 
+ 8 2016-02-26     0.0148 
+ 9 2016-03-04     0.0281 
+10 2016-03-11     0.0106 
+# ... with 42 more rows
+
+# 都是一列日期，一列周均矫正收盘价。
+# 下面把两个数据框合在一起：
+
+left_join(fb_returns, xlk_returns, by = "date") -> returns_combined
+returns_combined
+
+# A tibble: 52 x 3
+   date       fb.returns xlk.returns
+   <date>          <dbl>       <dbl>
+ 1 2016-01-08   -0.0478     -0.0516 
+ 2 2016-01-15   -0.0242     -0.0187 
+ 3 2016-01-22    0.0313      0.0264 
+ 4 2016-01-29    0.146       0.0213 
+ 5 2016-02-05   -0.0725     -0.0422 
+ 6 2016-02-12   -0.0198     -0.00582
+ 7 2016-02-19    0.0251      0.0354 
+ 8 2016-02-26    0.0320      0.0148 
+ 9 2016-03-04    0.00436     0.0281 
+10 2016-03-11    0.00941     0.0106 
+# ... with 42 more rows
+
+# 其实用cbind或者bind_columns也是一样的，因为日期的排布是一样的。
+# 下面我们来构造模型函数，这里用的是线性回归模型：
+
+regr_fun <- function(data) {
+  coef(lm(fb.returns ~ xlk.returns, data = data))
+}
+
+# 只用了一元线性回归，因此这个函数接收一个数据框，返回值包括两个，一个是截距，一个是回归系数。
+# 这里是最需要注意的地方，如果想用其他模型，返回其他的值，那么都是在这个函数中进行设置。
+# 下面我们进行滑窗建模：
+
+returns_combined %>%
+  tq_mutate(mutate_fun = rollapply,
+            width      = 12,
+            FUN        = regr_fun,
+            by.column  = FALSE,
+            col_rename = c("coef.0", "coef.1"))
+# 讲讲上面干了什么：
+# 首先我们用了rollapply函数，设置窗口大小为12周（width = 12）。
+# 此外，在滑动建模的时候，采用我们之前设置好的线性模型（FUN = regr_fun），
+# 返回值是两个值，因此我们对其进行重新命名（col_rename = c("coef.0", "coef.1"))）。
+# 至于by.column这个参数，是询问是否对每一列都进行这个操作，是rollapply中的一个参数，这里我们显然不需要，因此设置为FALSE。
+# 不过这是看不到结果的，前10行应该都是NA，因此我们换个方法来看结果：
+
+returns_combined %>%
+  tq_mutate(mutate_fun = rollapply,
+            width      = 12,
+            FUN        = regr_fun,
+            by.column  = FALSE,
+            col_rename = c("coef.0", "coef.1")) %>% 
+  print(n = 20)
+
+# A tibble: 52 x 5
+   date       fb.returns xlk.returns    coef.0    coef.1
+   <date>          <dbl>       <dbl>     <dbl>     <dbl>
+ 1 2016-01-08   -0.0478    -0.0516    NA        NA      
+ 2 2016-01-15   -0.0242    -0.0187    NA        NA      
+ 3 2016-01-22    0.0313     0.0264    NA        NA      
+ 4 2016-01-29    0.146      0.0213    NA        NA      
+ 5 2016-02-05   -0.0725    -0.0422    NA        NA      
+ 6 2016-02-12   -0.0198    -0.00582   NA        NA      
+ 7 2016-02-19    0.0251     0.0354    NA        NA      
+ 8 2016-02-26    0.0320     0.0148    NA        NA      
+ 9 2016-03-04    0.00436    0.0281    NA        NA      
+10 2016-03-11    0.00941    0.0106    NA        NA      
+11 2016-03-18    0.0186     0.0219    NA        NA      
+12 2016-03-24    0.0144     0.000688   0.00514   1.34   
+13 2016-04-01    0.0266     0.0248     0.00143   1.48   
+14 2016-04-08   -0.0468    -0.0181    -0.00167   1.60   
+15 2016-04-15   -0.00895    0.0103    -0.00307   1.62   
+16 2016-04-22    0.00839   -0.0203    -0.00632   1.11   
+17 2016-04-29    0.0635    -0.0302     0.00972   0.142  
+18 2016-05-06    0.0162     0.00285    0.0132    0.0601 
+19 2016-05-13    0.00268   -0.000947   0.0117   -0.00853
+20 2016-05-20   -0.0205     0.0123     0.00783  -0.145  
+# ... with 32 more rows
+
+# 要求显示20行，我们发现，数据从第12周开始有。
+# 也就是说，自第12周开始，每次用包含当前周在内的前12周的数据构建回归模型，计算得到的模型参数附加在后面。
+# 我们发现，在使用tq_mutate系列的时候，一般是使用select来告诉计算机我们要对哪一列进行函数的处理。
+# 但是有两个参数的时候怎么办？
+# 可以考虑使用下面的函数：
+
+FANG %>%
+    group_by(symbol) %>%
+    tq_mutate_xy(x = close, y = volume, 
+                 mutate_fun = EVWMA, col_rename = "EVWMA")
+
+# A tibble: 4,032 x 9
+# Groups:   symbol [4]
+   symbol date        open  high   low close    volume adjusted EVWMA
+   <chr>  <date>     <dbl> <dbl> <dbl> <dbl>     <dbl>    <dbl> <dbl>
+ 1 FB     2013-01-02  27.4  28.2  27.4  28    69846400     28    NA  
+ 2 FB     2013-01-03  27.9  28.5  27.6  27.8  63140600     27.8  NA  
+ 3 FB     2013-01-04  28.0  28.9  27.8  28.8  72715400     28.8  NA  
+ 4 FB     2013-01-07  28.7  29.8  28.6  29.4  83781800     29.4  NA  
+ 5 FB     2013-01-08  29.5  29.6  28.9  29.1  45871300     29.1  NA  
+ 6 FB     2013-01-09  29.7  30.6  29.5  30.6 104787700     30.6  NA  
+ 7 FB     2013-01-10  30.6  31.5  30.3  31.3  95316400     31.3  NA  
+ 8 FB     2013-01-11  31.3  32.0  31.1  31.7  89598000     31.7  NA  
+ 9 FB     2013-01-14  32.1  32.2  30.6  31.0  98892800     31.0  NA  
+10 FB     2013-01-15  30.6  31.7  29.9  30.1 173242600     30.1  30.1
+# ... with 4,022 more rows
+
+# EVWMA这个函数接受两个参数，它会把x和y作为这个函数的前两个参数，然后进行计算，最后得到的结果保存在EVWMA列中。
+# 简单介绍一下EVWMA：Elastic Volume Weighted Moving Average，弹性成交量加权移动平均线指标。
+# 它是每股价格的逼近，而R中这个函数默认的时间窗口为10。
