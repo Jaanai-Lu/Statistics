@@ -1,6 +1,7 @@
 """
     两周学习python
     作者：陆震
+    日期：17/05/2019
 """
 
 
@@ -189,6 +190,94 @@ def function4(arg1, *arg2): # 不定长参数
     return
 function4(10, 1, 2, 3, 4, 5)
 
+# Python中的类：
+# Python是面向对象的程序语言，所以也有面向对象的方法
+# 在Python中创建一个类或对象不是一件困难的事
+# 类是用来描述具有相同属性和方法的对象的集合，定义了该集合中每个对象所共有的属性和方法，对象则是类的实例
+# 类的创建：
+# 使用 class 关键词来创建一个类，在class关键词之后紧跟类的名称，以冒号 ：结尾
+# 注意：
+# 1. 类变量：在创建的类中会定义一些变量，这些变量叫做类变量，
+# 类变量的值在这个类的所有实例之间是共享的，同时内部类或者外部类也能对这个变量的值进行访问
+# 2. __init__()：是类的初始化方法，我们在创建一个类的实例时就会调用一次这个方法
+# 3. self：代表类的实例，在定义类的方法时是必须要有的，但是在调用时不必传入参数
+class Student:
+
+    student_Count = 0
+    
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+        Student.student_Count += 1
+
+    def dis_student(self):
+        print('Student name:', self.name,\
+            'Student age:', self.age)
+
+student1 = Student('Tang', '20') # 创建第1个Student对象
+student2 = Student('Lu', '25') # 创建第2个Student对象
+
+student1.dis_student()
+student2.dis_student()
+print('Total Student:', Student.student_Count)
+# 类的继承：
+# 定义一个类，通过继承获得另一个类的所有方法，被继承的类叫做父类，进行继承的类叫做子类
+# 这样可以有效解决代码的重用问题，可提升代码效率和利用率，还可增加可扩展性
+# 注意：
+# 当一个类被继承时，这个类中的类初始化方法是不会被自动调用的，
+# 所以我们使用Python代码去调用某个方法时，默认会现在所在的类中进行查找，
+# 如果没有找到，则判断所在的类是否为子类，若为子类，就继续到父类中查找
+class People:
+
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+    def dis_name(self):
+        print('name is:', self.name)
+
+    def set_age(self, age):
+        self.age = age
+
+    def dis_age(self):
+        print('age is:', self.age)
+
+class Student(People):
+    def __init__(self, name, age, school_name):
+        self.name = name
+        self.age = age
+        self.school_name = school_name
+
+    def dis_student(self):
+        print('School name is:', self.school_name)
+
+student = Student('Nie', '26', 'GLDZ') # 创建一个Student对象
+student.dis_student() # 调用子类的额方法
+student.dis_name() # 调用父类的方法
+student.dis_age() # 调用父类的方法
+student.set_age(22) # 调用父类的方法
+student.dis_age() # 调用父类的方法
+# 类的重写：
+# 在继承一个类之后，父类中的很多方法也许就不能满足我们现有的需求了
+# 这时我们需要对类进行重写
+class Parent: # 定义父类
+
+    def __init__(self):
+        pass
+    
+    def print_info(self):
+        print('This is Parent.')
+
+class Child(Parent): # 定义子类
+
+    def __init__(self):
+        pass
+
+    def print_info(self): # 对父类的方法进行重写
+        print('This is Child.')
+
+child = Child()
+child.print_info()
 
 
 if __name__ == '__main__':
