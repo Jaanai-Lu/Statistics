@@ -1,3 +1,201 @@
+"""
+    两周学习python
+    作者：陆震
+"""
+
+
+def main():
+    pass
+
+for i in range(3):
+    print(i)
+    print('-' * 10)
+
+# 使用斜杠（\）将过长的一行代码分割成多行
+print('Life is short,\
+ I use python')
+
+# 点对多点的赋值：将一个数据在一次赋值操作中同时传递给多个变量
+a = b = c = 2
+print(a, b, c)
+# 多点对多点的赋值：在一条语句中将多个数据赋值给多个变量，个数和位置要分别一一对应
+a, b, c = 'Jaanai', 'Zhen', 'Lu'
+print(a)
+print(b)
+print(c)
+
+# 浮点数打印输出时默认保留一位小数，另外可以自定义输出精度
+d = 25.30
+print(d)
+# 使用 '%f' 定义输出精度保留6位小数
+print('%f' % d)
+# '%.2f' 保留2位小数
+print('%.2f' % d)
+# 若数字位于点号前，则表示保留到小数点前的位数
+print('%1.f' % d)
+
+# 字符串索引
+print(a)
+print(a[-3:])
+
+# 列表即 方括号[] ，可以实现多种数据类型的嵌套，甚至可以实现在列表中嵌套列表
+list1 = ['hi', 20, 3.14]
+list2 = ['Jaanai', 22]
+print(list1)
+print(list1[0])
+print(list1[1:])
+print(list1 + list2)
+# 可对列表中的元素进行更新，即重新赋值
+list1[0] = 'hello'
+print(list1)
+
+# 元组即 圆括号() ，元组内的元素不能被重新赋值，其内部元素是固定的，所以也被称为只读型列表
+tuple1 = ('hi', 20, 3.14)
+tuple2 = ('Jaanai', 22)
+print(tuple1)
+print(tuple1[0])
+print(tuple1[1:])
+print(tuple1 + tuple2)
+
+# 字典即 大括号{} ，相比于前俩种，操作更加灵活和复杂
+# 其中一个区别就是列表和元组是有序的元素集合，字典却是一组无序的元素集合
+# 虽然字典是无序的，但是为了达到对字典内元素的可操控性，对于内部的每个元素都会加入相应的键值
+# 若需要对字典中元素的值进行赋值或重新赋值等，只能通过元素对应的键值进行，而不能使用在列表和元组中操作索引值的方法
+dict_1 = {}
+dict_1['one'] = 'This is one'
+dict_1[2] = 'This is two'
+dict_info = {'name': 'Zhen', 'num': 3.14, 'city': 'Harbin'}
+print(dict_1) # 输出整个dict_1字典
+print(dict_1.keys()) # 输出dict_1的所有键值
+print(dict_info.keys())
+print(dict_info.values()) # 输出所有值
+print(dict_info['name']) # 输出键值为name的值
+print(dict_1[2])
+
+# 取模运算符即 % ，符号前的变量以符号后的变量为模进行取模运算
+# 求幂运算符即 ** ，符号前的变量以符号后的变量为幂进行求幂运算
+# 取整运算符即 // ，符号前的变量以符号后的变量为底进行取整运算
+a = 7
+b = 3
+a //= b
+print('a // b =', a)
+a = 7 # 对a进行重置
+a %= b
+print('a % b = ', a)
+
+# 比较运算分为单层比较和多层比较
+# 单层比较指参与比较运算的变量只是前后俩个变量
+#多层比较指参与比较运算的变量可以有3个及以上
+a = 5
+b = 4
+c = 2
+print(a == b == c) # 判断a是否等于b且b是否等于c
+print(a > b > c) # 判断a是否大于b且b是否大于c
+print(a < b < c) # 判断a是否小于b且b是否小于c
+
+# 布尔运算符，常见的即 and与、or或、not非 ，且这三个布尔运算符在运算后返回的运算结果值也是布尔性的
+a = 5
+b = 4
+c = 2
+print(a>b and a<b)
+print(not a<b)
+
+# 成员运算符，最典型的是 in
+# 若我们已经拥有一个目标列表，当想判断某个元素是否是目标列表中的元素时，可以使用成员运算符确定，使用成员运算符返回的值是布尔型的
+list1 = ['hi', 20, 3.14]
+a = 3.154
+b = 'hi'
+print(a in list1)
+print(b in list1)
+
+# 身份运算符，用于判断所比较的变量是否是同一个对象，或者定义的这些变量是否指向相同的内存地址
+# 返回的值是布尔型的
+# 常用的身份运算符是 is, is not
+a = 500
+b = 500
+print('a的内存地址：', id(a)) # id()用于返回所定义变量的内存地址
+print('b的内存地址：', id(b))
+print('a is not b', a is not b)
+print('a == b', a == b)
+print('a is b', a is b) 
+# 注意： is 和 等于运算符== 有着本质的区别，后者仅仅比较变量值是否相等，前者比较变量是否属于同一个对象，因为有时候相同的数值却有不同的内存地址
+
+# 循环语句：while循环，for循环
+# 循环判断语句：break、cotinue、pass
+# break：出现在循环代码块中，用于中断当次循环并结束整个循环语句
+# 在break循环控制语句触发后，整个循环语句就直接结束
+num = 10
+for i in range(10):
+    if i == 5:
+        break
+    if i < num:
+        print('the num is', i)
+# continue：出现在循环代码块中，用于中断当次循环并直接开始下次循环
+# 在continue循环控制语句触发后，受影响的仅仅是当次循环，之后的循环过程不受任何影响
+num = 10
+for i in range(10):
+    if i == 5:
+        continue
+    if i < num:
+        print('the num is', i)
+# pass：出现在循环代码块中，不做任何操作，继续执行当次循环中的后续代码，主要用于保持代码块的完整性
+# 不执行任何操作，循环不卡壳，继续执行下去
+num = 10
+for i in range(10):
+    if i == 5:
+        pass
+    if i < num:
+        print('the num is', i)
+# 有个非常实用的操作，可以通过实用循环完成对列表的迭代，通过对列表的迭代可以遍历整个列表中的所有元素
+list1 = ['hi', 20, 3.14]
+for i in list1:
+    print(i)
+
+# 函数：一组按照相应的规则编写的能够实现相关功能的代码块
+# 通过对函数的使用，代码具备了模块化的性质，降低了代码编写的重复性
+def function():
+    print('Jaanai')
+    # 若在return后无任何内容或在代码段中没有使用return关键词，那么函数默认返回一个空值 None 给调用该函数的方法
+    return
+a = function()
+print(a)
+# 虽然函数被定义成可传递参数的函数，但可以不传递参数给这个函数
+# 在不传递参数给该函数时，函数会使用函数定义的默认参数
+# 若是调用函数时传递了合法的参数，该函数就会使用传递的参数进行相应的操作，而不再使用默认参数
+def function(str = 'hi'):
+    print('What you say is:', str)
+function('hello')
+# 在自定义附带参数的函数时，会涉及参数的传递方式，参数的传递方式有与定义的参数类别有非常大的联系，经常会用到的几种参数类别有：
+# 1. 必备参数：调用该函数时必须传递相应参数，否则程序会报错
+def funtion1(str): # 必备参数
+    print('What you say is:', str)
+    return
+funtion1('hello')
+# 2. 关键字参数：使用关键字参数来确定传入的参数值，在传递时调换关键字的位置不会对最终的参数传递顺序产生影响
+def function2(str2 = 'luzhen', str1 = 'Jaanai'): # 关键字参数
+    print('What you say is:', str1, str2)
+    return
+function2()
+# 3. 默认参数：没有传递参数时，使用默认参数
+def function3(str = 'luzhen'): # 默认参数
+    print('What you say is:', str)
+    return
+function3()
+# 4. 不定长参数：当需要传递给函数的参数比函数声明时的参数要多很多时，可以使用不定长参数来完成
+def function4(arg1, *arg2): # 不定长参数
+    print(arg1)
+    for i in arg2:
+        print(i)
+    return
+function4(10, 1, 2, 3, 4, 5)
+
+
+
+if __name__ == '__main__':
+    main()
+
+
+
 有10个问题：
 1. Python中都是对象吗?
 字符串是对象。列表对象，函数对象，甚至模块也是对象。
