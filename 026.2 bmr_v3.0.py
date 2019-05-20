@@ -24,7 +24,7 @@ def main():
         print('请输入以下信息，用空格分隔')
         input_string = input('性别 体重(kg) 身高(cm) 年龄:')
         # input_string.find(' ') # 寻找空格，另一方法
-        string_list = input_string.split(' ') # 字符串分割
+        string_list = input_string.split(' ') # 字符串分割，使用split函数之后，字符串转换为list类型，需要赋值给一个新的变量
         gender = string_list[0]
         weight = float(string_list[1])
         height = float(string_list[2])
@@ -40,7 +40,7 @@ def main():
             bmr = -1
         if bmr != -1:
             # 字符串格式化输出，使用 {} 占位
-            # 重复输出时可以使用数字标记顺序
+            # 重复输出时可以使用数字标记顺序，{} 中的数字代表的是format括号中变量的索引值
             print('您的性别：{1}，体重：{0}（kg），身高：{2}（cm），年龄：{3}'.format(weight, gender, height, age))
             print('您的基础代谢率为：{}(大卡)'.format(bmr)) 
         else:
