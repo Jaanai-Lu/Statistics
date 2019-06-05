@@ -286,6 +286,30 @@ leadership[, c(-8, -9)] -> newdata
 NULL -> leadership$q3 -> leadership$q4 # 这里将q3和q4俩列设为了未定义NULL
 # 注意：NULL与NA(表示缺失)是不同的
 
+# 例子：
+read.csv('tumor_data.csv') -> tumor
+tumor$genenames %in% c("RPL13AP5", "RPL21", "RPS17", "RPL21P28", "RPS10", "IGF2", "H3F3AP4", "RPL13A",
+                       "BMP4", "EIF4A1", "SLC25A6", "GNB2L1", "EEF1G", "RPSA", "RPLP0", "FOS", "RPS6",
+                       "RPL7A", "RPS8", "RPL8", "H19", "UBD", "LANCL2", "GDF15", "HIST1H4C", "PHLDA2",
+                       "UBE2C", "CCND2", "CXCL3", "HNRNPL", "CXCL2", "PDCD5", "ROMO1", "HMGB1",
+                       "C8orf33", "SNHG5", "EIF2S2", "TMSB4X", "PFDN4", "VOPP1", "ZG16", "SPINK1",
+                       "HSPA1A", "PIGR", "MALAT1", "FCGBP", "PI3", "TFF3", "CCL20", "LCN2", "SLC26A2",
+                       "RPL13", "FN1", "MUC2", "C2orf82", "UQCR11", "CES2", "C15orf48", "HLA-A", 
+                       "NDUFA1", "LCN15", "UGDH-AS1", "ANXA1", "APOBEC3C", "ARL14", "CKB", "RAB3B",
+                       "FABP1", "SOX4", "PRAC1", "RPS4Y1", "TM4SF1", "MALAT1", "DSG3", "ACOT13",
+                       "PHLDA1", "UQCRQ", "SHISA9", "RNF149", "HES1", "KLK6", "TFF1", "ANPEP",
+                       "MUC1", "MIF", "NME2", "RNASE1", "ASS1", "TST", "TSPAN1", "IGFL2", "PPIB",
+                       "S100A14", "LYZ", "GAPDH", "PPP1R1B", "C10orf99", "GPA33", "KLK10", "LCN2",
+                       "KRT23", "SMARCE1", "MIEN1", "KRT10", "IGFBP4", "KRT20", "ERBB2", "LGALS1", 
+                       "STARD3", "CD55", "POMP", "AGR3", "CRIP1", "MTIF3", "SFTA2", "TNS4", "RPS4Y1",
+                       "TMEM99", "PRSS3", "SEC62", "MMP7", "UBD", "IGLL5", "S100A9", "IGJ", "HULC",
+                       "CD74", "HLA-DRA", "FTH1", "UCA1", "IFI6", "BIRC3", "IL32", "MZB1", "PSMB9",
+                       "SOD2", "SRGN", "TGM2", "TCEB2", "PRSS23", "DEFA6", "WFDC2", "ANXA13", "ATOH1",
+                       "GUCA2A", "HSPA6", "BTG2", "PCSK1", "HEPACAM2", "REG4", "TUBA1A", "DNAJB1", 
+                       "LOC101929549", "HES6", "H3F3AP4", "DYRK4", "DBNDD2", "BLCAP", 
+                       "KLK12", "COLCA2") -> genes
+tumor[genes, ] -> genes_data
+
 # 丢弃变量是保留变量的逆向操作，选择哪一种方式进行变量筛选取决于两种方式的编码难易程度
 # 如果有许多变量需要丢弃，那么直接保留需要留下的变量即可，反之亦然
 
