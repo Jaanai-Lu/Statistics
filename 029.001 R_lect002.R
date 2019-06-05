@@ -151,6 +151,52 @@ read.table(header = TRUE, text = mydatatxt) -> mydata # read.table()处理字符
 # 将mydata数据框保存到当前工作目录下的Excel文件mydata.xlsx的工作表(默认是Sheet 1)中
 # 默认情况下，数据集中的变量名称会被作为电子表格头部，行名称会放在电子表格的第一列，函数会覆盖已有原文件
 
+# 从带分隔符的文本文件导入数据：
+# 可以使用read.table()函数，此函数可读入一个表格格式的文件并将其保存为一个数据框
+# 语法为 read.table(file, options) -> mydataframe
+# 其中file是一个带分隔符的ASCII文本文件，options是控制如何处理数据的选项，常见的选项有：
+# header 表示文件是否在第一行包含了变量名的逻辑型变量
+# sep 分开数据值的分隔符，默认为sep=''(表示一个或多个空格、制表符、换行或回车)，
+# sep=','读取用逗号分隔行内数据的文件，sep='\t'读取使用制表符分隔行内数据的文件
+# row.names 用于指定一个或多个行标记符(指定某变量为行名，该列即不再有标签，导致数据会少一列)
+# col.names 若数据文件的第一行不包括变量名(header=FALSE)，可以使用col.names指定一个包含变量名的字符向量
+# 若header=FALSE，且col.names选项被省略，则变量会被分别命名为V1、V2，以此类推
+# na.strings 用于表示缺失值的字符向量，如 na.strings=c('-9', '?') 在读取数据的时候把-9和?转换为NA
+# colClasses 分配到每一列的类向量
+# 如 colClasses=c('numeric', 'numeric', 'character', 'NULL', 'numeric')
+# 把前俩列读取为数值型变量，把第三列读为字符型向量，跳过第四列，把第五列读取为数值型向量
+# 若数据有多余五列，colClasses的值会被循环
+# 在处理大型文本文件的时候，加上colClasses可以可观地提升处理速度
+# quote 对有特殊字符的字符串划定界限，默认值是双引号"或单引号'
+# skip 读取数据前跳过的行的数目，此选项在跳过头注释的时候比较有用
+# stringsAsFactors 一个逻辑变量，标记字符向量是否需要转化成因子，默认为TRUE，除非它被colClasses所覆盖
+# 在处理大型文本文件的时候，设置为stringsAsFactors=FALSE可以提升处理速度
+# text 指定文字进行处理，若text被设置，file应该留空
+
+# read.table('studentgrades.csv', header = TRUE, row.names = 'StudentID', sep = ',') -> grades
+# read.table()默认把字符向量转化为因子
+# read.table('studentgrades.csv', header = TRUE, row.names = 'StudentID', sep = ',', 
+# colClasses = c('character', 'character', 'character', 'numeric', 'numeric', 
+# 'numeric')) -> grades
+# 注意：此时grades作为实数而不是整数
+
+# 导出符号分隔文本文件：
+# write.table(x, outfile, sep = delimiter, quote = TRUE, na='NA')
+# 其中，x是要输出的对象，outfile是目标文件
+# 如 write.table(mydata, 'mydata.txt', sep = ',')
+# 将mydata数据输出到当前目录下逗号分隔的mydata.txtx文件中
+# 用路径(如 C:/myprojects/mydata.txt)可将输出文件保存到该地址下
+# 用sep = '\t'替换sep = ','，数据就会保存到制表符分隔的文件中
+# 默认情况下，字符串是放在引号中的
+
+# 用连接来导入数据：
+# 我们熟悉的是从计算机上已存在的文件中导入数据，R也提供了若干种通过连接connection来访问数据的机制
+# 函数file()、gzfile()、bzfile()、xzfile()、unz()和url()可作为文件名参数使用
+# 函数file()允许访问文件、剪贴板和C级别的标准输入
+# 函数gzfile()、bzfile()、xzfile()和unz()允许读取压缩文件
+# 函数url()允许通过一个含有http://、ftp://或file://的完整URL访问网络上的文件，还可以为HTTP和FTP连接指定代理
+# 为了方便，用双引号围住的完整的URL也经常直接用来代替文件名使用，具体参见 ?file
+
 # 数据集的标注：为了使结果更易解读
 # 这种标注包括为变量名添加描述性的标签，以及为类别型变量中的编码添加值标签
 # 然而R处理变量变量标签的能力有限
