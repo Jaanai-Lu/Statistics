@@ -365,34 +365,3 @@ sqldf('select avg(mpg) as avg_mpg,
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
