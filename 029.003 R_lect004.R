@@ -169,7 +169,7 @@ sub('\\s', '.', 'Hello There') # 返回值为"Hello.There"
 # strsplit(x, split, fixed=FALSE) 在split处分割字符向量x中的元素
 # 若fixed=FALSE，则pattern为一个正则表达式；若fixed=TRUE，则pattern为一个文本字符串
 strsplit('abc', '') -> y # 返回一个含有1个成分、3个元素的列表，包含的内容为"a" "b" "c"
-unlist(y)[2]
+unlist(y)[2] # unlist()函数打印列表并查看列表
 sapply(y, '[', 2) # '[' 是一个可以提取某个对象的一部分的函数
 # 上述俩者都会返回"b"
 
@@ -290,11 +290,20 @@ roster[order(Lastname, Firstname), ] -> roster
 
 
 # 控制流
-# 正常情况下，R程序的语句是从上至下顺序执行的
-# 有时，我们希望重复执行某些语句，仅在满足特定条件的情况下执行另外的语句
-# 这就是控制流结构发挥作用的地方
-# R有一般现代编程语言中都有的标准控制结构
-# 首先将看到用于条件执行的语句，接下来是用于循环执行的结构
+# 正常情况下，R解释器运行代码时，程序的语句是从上至下顺序逐行读取执行的
+# 若一行不是一个完整的语句，它会读取附加行直到可以构成一个完全的语句
+3 + 2 + 5
+# 等价于
+3 + 2 +
+  5 # 第一行末尾的 + 号表示语句是不完整的
+3 + 2 
++ 5
+# 第一行被视为一个完整的语句
+# 有时，我们不需要按顺序处理代码
+# 我们希望有条件的或是重复地执行一个或多个语句很多次
+# 这就需要控制流结构发挥作用
+# R有一般现代编程语言中都有的标准控制结构：
+# 首先将看到用于条件执行的语句，接下来是用于循环执行的结构。
 
 # 掌握以下概念：
 # 语句statement是一条单独的R语句或一组复合语句(包含在花括号 {} 中的一组R语句，使用分号分隔)；
@@ -306,36 +315,94 @@ roster[order(Lastname, Firstname), ] -> roster
 # 循环结构包括for循环和while循环
 
 # for循环：重复地执行一个语句，直到某个变量的值不再包含在序列seq中为止
-# 语法为 for (var in seq) statement
+# 语法为 for (var in seq) statement 或 for (var in seq) {statements}
+# 其中，var是一个变量名，seq是计算向量的表达式
 for (i in 1:10) print('hello') # 输出10次
 for (i in 10) print('hello') # 输出1次
+for (i in 1:5)
+  print(1:i)
+for (i in 5:1)
+  print(1:i)
+# 注意：var直到函数退出时才退出。最后一个for循环中，退出时 i 为 1
+for (i in 1:5) {
+  print(1:i);
+  print('luzhen')
+}
+for (i in 1:5) {
+  print(1:i)
+  print('luzhen')
+}
 
 # while循环：重复地执行一个语句，直到条件不为真为止
 # 语法为 while (cond) statement
 10 -> i
 while (i > 0) {print('hello'); i - 1 -> i} # 输出10次
-# 注意：要确保while的条件语句能顾改变，即让它在某个时刻不再为真，否则会造成死循环
+10 -> i
+while (i > 0) {
+  print('hello')
+  i - 1 -> i}
+# 注意：要确保while的条件语句能够改变，即让它在某个时刻不再为真，否则会造成死循环
 
 # 注意：在处理大型数据集中的行和列时，R中的循环较费时低效
 # 尽可能联用R中的内建数值/字符处理函数和apply族函数
 
-# 条件执行：在条件执行结构中，一条或一组语句仅在满足一个指定条件时执行
+# 条件执行：在条件执行结构中，一条或一组语句仅在满足一个指定条件时执行，即有条件地执行语句
 # 条件执行结构包括 if-else、ifelse和switch
 
 # if-else结构
 # 控制结构if-else在某个给定条件为真时执行语句，也可同时在条件为假时执行另外的语句
+# 即运行条件是一元逻辑向量(TRUE或FALSE)且不能有缺失NA，else部分可选
 # 语法为： 
 # if (cond) statement
 # if (cond) statement1 else statement2
 if (is.character(grade)) as.factor(grade) -> grade
 if (!is.factor(grade)) as.factor(grade) -> grade else print('Grade already is a factor')
+if (interactive()) {
+  plot(x, y)
+} else {
+  png('myplot.png')
+  plot(x, y)
+  dev.off()
+} # 若代码交互运行，interactive()函数返回TRUE，输出一个曲线图，否则曲线图被保存在磁盘里
 
-# ifelse结构：是if-else结构比较紧凑的向量化版本
-# 语法为 ifelse(cond, statement1, statement2) 
-# 若cond为TRUE，执行第一个语句；若cond为FALSE，执行第二个语句
+# ifelse结构：是if-else结构比较紧凑的向量化版本，矢量化允许一个函数处理无明确循环的对象
+# 语法为 ifelse(cond, statement1(yes), statement2(no))
+# 其中cond是已强制为逻辑模式的对象，statement1(yes)返回cond为真时的值，statement1(no)返回cond为假时的值
+# 即若cond为TRUE，执行第一个语句；若cond为FALSE，执行第二个语句
+0.6 -> score
+ifelse(score > 0.5, 'passed', 'failed')
 ifelse(score > 0.5, print('passed'), print('failed'))
-ifelse(score > 0.5, 'passed', 'failed') -> outcome
+0.6 -> score
+ifelse(score > 0.5, 
+       'passed', 
+       'failed') -> outcome
+outcome
 # 在程序的行为是二元时，或者希望结构的输入和输出均为向量时，务必使用ifelse
+
+# 如，现有一个p值向量，是从包含六个统计检验的统计分析中提取出来的
+# 我们想要标记p<0.05水平下的显著性检验
+
+c(.0867, .0018, .0054, .1572, .0183, .5386) -> pvalues
+ifelse(pvalues < .05,
+       'Significant',
+       'Not Significant') -> results
+results
+class(results)
+# ifelse()函数通过pvalues向量循环并返回一个包括'Significant'或'Not Significant'的字符串
+
+# 用显式循环完成：
+c(.0867, .0018, .0054, .1572, .0183, .5386) -> pvalues
+vector(mode = 'character', length = length(pvalues)) -> results
+for (i in 1:length(pvalues)) {
+  if (pvalues[i] < .05)
+    'Significant' -> results[i]
+  else
+    'Not Significant' -> results[i]
+}
+results
+class(results)
+
+# 可以看出，向量化版本更快且更有效
 
 # switch结构：根据一个表达式的值选择语句执行
 # 语法为 switch(expr, ...)
@@ -351,14 +418,102 @@ for (i in feelings)
   )
 
 # 自编函数
+# R中处处是函数，算数运算符 +、-、/和* 实际上也是函数，如
+2 + 2
+# 等价于
+'+' (2, 2)
 # 事实上，R中许多函数都是由已有函数构成的
 # 函数的结构大致如下：
-function(arg1, arg2, ...) {
+fuctionname <- function(arg1, arg2, ...) {
   statements
-  return(objects)
-} -> myfunction
+  return(value)
+} 
+# 参数是可选的，可通过关键字和/或位置来传递，即使没有值被传递，函数也必须使用圆括号
+# 另外，参数可以有默认值
+# return()函数返回函数产生的对象，它也是可选的，若缺失，函数中最后一条语句的结果会被返回
+# 返回对象的数据结构是任意的，从标量到列表皆可
+f <- function(x, y, z=1) {
+  x + (2*y) + (3*z) -> result
+  return(result)
+}
+f(2, 3, 4) # 参数通过位置传递
+f(2, 3) # 参数通过位置传递且z取默认值
+f(x=2, y=3) # 参数通过关键字传递且z取默认值
+f(z=4, y=2, 3) # 参数y和z通过关键字传递，且x被假定为未明确指定的第一个参数，这里x=3
+# 可以使用args()函数观测(查看)参数的名字和默认值
+args(f)
+# args()被涉及用于交互式观测
+# 若需要以编程方式获取参数名称和默认值，可使用formals()函数，它返回含有必要信息的列表
+formals(f)
+# 注意：R中参数是按值传递的，不是按地址传递的，如
+# lm(height ~ weight, data = women) -> result
+# women数据集不是直接得到的，需要形成一个副本然后传递给函数
+# 若数据集很大的话，内存RAM可能被迅速用完
+# 因而在处理大数据问题时需要使用特殊的技术。
 # 注意：函数中的对象只在函数内部使用
-# 返回对象的数据类型是任意的，从标量到列表皆可
+# R中对象的范围(名称如何产生内容)是一个复杂的话题，需要注意：
+# 1. 在函数之外创建的对象是全局的(即也适用函数内部)，而在函数内创建的对象是局部的(仅仅适用于函数内部)
+# 2. 局部对象在函数执行后即被丢弃，
+# 只有通过return()函数(或使用算子 ->> 分配)传回的对象在函数执行后才仍可继续使用
+# 3. 全局对象在函数之内可被访问(可读)，但是不会被改变(除非使用算子 ->> )
+# 4. 对象可通过参数传递到函数中，但是不会被函数改变，传递给函数的是对象的副本而不是其本身
+2 -> x
+3 -> y
+4 -> z
+f <- function(w) {
+  2 -> z
+  w*y*z -> x
+  return(x)
+}
+f(x) # 返回值为12
+x # 返回值为2，这里，x的一个副本被传递到函数f()中，但是初始的x不变
+y # 返回值为3，y的值通过环境得到
+z # 返回值为4，z存在于环境中，在函数中设置的值可被使用但不改变环境中的值
+
+# 环境：
+# R中环境包括框架和外壳
+# 框架是符号-值(对象名称及其内容)的集合；外壳是指向封闭环境(父环境)的一个指针
+# R允许在语言内部操作环境，以便达到对范围的细微控制以及函数和数据的分离
+# 当你第一次看到R的提示时，即处于全局环境中
+# 可通过new.env()函数创建一个新的环境并通过assign()函数在环境中创建任务
+# 对象的值可通过get()函数从环境中得到
+5 -> x # 在全局环境中存在一个称为x的对象，其值为5
+new.env() -> myenv
+assign('x', 'Homer', envir = myenv) # 在myenv环境中存在一个称为x的对象，其值为'Homer'
+# 等价于
+'Homer' -> myenv$x
+ls()
+ls(myenv)
+x
+get('x', envir = myenv)
+# 等价于
+myenv$x
+parent.env(myenv) # 函数parent.env()展示父环境，这里myenv的父环境就是全局环境
+# 注：全局环境的父环境是空环境
+# 可使用 ?environment 查看详情
+# 因为函数也是对象，所以函数也有环境
+# 这在探讨函数闭包function closure(以创建时状态被打包的函数)时非常重要
+# 如，由另一个函数创建的函数：
+trim <- function(p) {
+  trimit <- function(x) {
+    length(x) -> n
+    floor(n*p) + 1 -> lo
+    n + 1 - lo -> hi
+    sort.int(x, partial = unique(c(lo, hi)))[lo:hi] -> x
+  }
+  trimit
+}
+# trim(p)函数返回一个函数，即从矢量中修剪掉高低值的p%
+1:10 -> x
+# 等价于
+c(1:10) -> z
+trim(.1) -> trim10pct
+
+
+
+
+
+
 
 # 自编的描述性统计量计算函数
 # 假设要编写一个函数，用来计算数据对象的集中趋势和散布情况
@@ -368,11 +523,11 @@ function(arg1, arg2, ...) {
 # 除非另外指定，否则此函数的默认行为应当是计算参数统计量并且不输出结果
 mystats <- function(x, parametric=TRUE, print=FALSE) {
   if (parametric) {
-    mean(x) -> center;
+    mean(x) -> center
     sd(x) -> spread
   } 
   else {
-    median(x) -> center;
+    median(x) -> center
     mad(x) -> spread
   }
   if (print & parametric) {
