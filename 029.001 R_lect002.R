@@ -18,6 +18,8 @@ patientdata[1:2] # 选取数据框的前俩列
 patientdata[c('diabetes', 'status')] -> a # 选取数据框指定名称的列(变量)
 patientdata$age # 选取数据框某个指定名称的列(变量)
 table(patientdata$diabetes, patientdata$status) # 生成俩变量的列联表
+patientdata[1, ] # 第一行
+patientdata[1, 2] # 第一行第二列 
 # 函数attach()将数据框添加到R的搜索路径中，R在遇到一个变量名后，将检查搜索路径中的数据框
 attach(patientdata)
 table(diabetes, status)
@@ -90,11 +92,173 @@ c('one', 'two', 'three') -> k # 字符型向量
 list(title=g, ages=h, j, k) -> mylist # 为列表中的对象命名
 mylist
 # 索引：
+mylist[2] # 输出的是列表
+mylist['ages'] # 输出的是列表
 # 可通过在双重方括号中指明代表某个成分的数字或名称来访问列表中元素
-mylist[[2]]
-mylist[['ages']]
-mylist$ages
+mylist[[2]] # 输出的是向量
+mylist[['ages']] # 输出的是向量
+mylist$ages # 输出的是向量
 # 许多R函数的运行结果都是以列表的形式返回的，需要取出其中哪些成分由分析人员决定
+
+# 数据类型：包括数值型、字符型、逻辑型、复数型和原生型
+# 有两种最基本的数据类型：原子向量atomic vector和泛型向量generic vector
+
+# 原子向量：包含单个数据类型(逻辑型、实数、复数、字符串或原始类型)的数组
+# 如，下面的每个都是一维原子向量：
+c(TRUE, FALSE) -> c # 逻辑型
+c(1, 2, 3, 4, -5) -> a # 实数型
+c(1+2i, 0+1i, 39+3i, 12+2i) -> cmplxNums # 复数型
+c('one', 'two') -> b # 字符串
+# 注：'raw'类型的向量包含原始字节，这里不作讨论
+
+# 许多R的数据类型是带有特定属性的原子向量
+# 例如，R没有标量型数据，R中标量实际是具有单一元素的原子向量，2 -> k 是 c(2) -> k 的简写
+
+# 矩阵是一个具有维度属性dim的原子向量，包含两个元素(行数和列数)
+c(1, 2, 3, 4, 5, 6, 7, 8) -> a # 一维数字向量a
+class(a) # class()函数读取和设置对象的类，这里返回值为"numeric"
+attributes(a) # attributes()函数罗列对象属性
+c(2, 4) -> attr(a, 'dim') # attr()函数设置对象属性，这里加上一个dim属性
+class(a)
+attributes(a) # 对象a现在变成了matrix类的2*4矩阵
+a # 对象a现在变成了matrix类的2*4矩阵
+# 矩阵的行名和列名也可以通过加上一个dimnames属性得到：
+list(c('A1', 'A2'), c('B1', 'B2', 'B3', 'B4')) -> attr(a, 'dimnames')
+class(a)
+attributes(a)
+str(a)
+a
+# 当然，矩阵也可以通过去除dim属性变成一维向量：
+NULL -> attr(a, 'dim')
+class(a)
+attributes(a)
+
+# 数组是一个具有维度属性dim的原子向量，包含三个或更多元素
+# 同样，也可以使用dim属性来设置维度，还可以为标签赋予dimnames属性
+# 与一维向量一样，矩阵和数据可以是逻辑型、实数、复数、字符串或原始类型，
+# 但是，在一个矩阵或数组中不可混杂不同类型
+c(1, TRUE, 'luzhen') -> a # a里元素全部转换为字符串
+class(a)
+attributes(a)
+c(TRUE, 'luzhen') -> a # a里元素全部转换为字符串
+c(1, TRUE) -> a # a里元素全部转换为实数型
+
+# 注：attr()函数允许创建任意属性并将其与对象相关联，
+# 属性存储关于对象的额外信息，函数能够用属性确定其处理方式
+# 有很多特定的函数可用来设置属性，包括dim()、names()、dimnames()、row.names()、class()和tsp()
+# 其中tsp()函数用来创建时间序列对象
+# 这些特殊的函数对设置的取值范围有一定的限制，除非创建自定义属性，否则最好这些特殊函数
+# 它们的限制和产生的错误信息使得编码时出现错误的可能性变少，且使错误更明显
+1:12 -> x; c(3,4) -> dim(x)
+class(x)
+x
+
+# 泛型向量或列表：列表是原子向量和/或其他列表的集合；数据框是集合中每个原子向量都有相同长度的特殊列表
+
+# R中自带iris数据框，该数据框描述了150种植物的四种物理测度及其种类(setosa、versicolor或virginica)
+head(iris)
+# 该数据框实际上是包含五个原子向量的列表，每个向量代表数据框中的一列(变量)
+unclass(iris) # 打印数据框并查看数据框
+attributes(iris) # 查看数据集属性
+# 它有一个names属性(变量名的字符串向量)，一个row.names属性(识别单个植物的数字向量)，
+# 以及一个带有'data.frame'值的class属性
+
+# 理解列表很重要，因为R的函数通常返回列表作为值
+# 这里看一个使用聚类分析技巧的例子(聚类分析使用一系列方法识别观测值的天然分组)
+# 这里使用K均值聚类分析对iris数据进行聚类分析：
+# 假定数据中存在三类，观测这些观测值(行)是如何被分组的
+# 此时忽略种类变量Species，仅使用每个植物的物理测度来聚类
+set.seed(1234)
+kmeans(iris[1:4], 3) -> fit
+# 对象fit中都包含哪些信息呢？
+fit
+# kmeans()函数的帮助页面表明该函数返回一个包含七种成分的列表
+?kemans
+# str()函数展示对象的结构
+str(fit)
+# unclass()函数直接检查对象的内容
+unclass(fit)
+# length()函数展示对象包含多少成分
+length(fit)
+# names()函数提供这些成分的名字
+names(fit)
+# attributes()函数检查对象的属性
+attributes(fit)
+# 返回该对象中每个成分的类
+sapply(fit, class)
+# 返回值显示：
+# cluster是包含所聚成的类的整数向量
+# centers是包含聚类中心的矩阵(各个类中每个变量的均值)
+# size是包含三类中每一类植物的整数向量
+# 要了解其他成分，使用 ?kmeans 查看Value部分
+
+# 学会理解列表中的信息是一个重要的R编程技巧
+# 任何数据对象中的元素都可以通过索引来提取
+
+# 提取原子向量中的元素
+# 提取元素可使用 object[index] ，其中object是向量，index是一个整数向量
+# 若原子变量中的元素已经被命名，index也可以是这些名字中的字符串向量
+# 注意：R中索引从1开始，而非其他语言一样从0开始
+c(1, 2, 3, 4, -5) -> a
+a[c(2, 4)]
+# 注意：a[2, 4] 报错
+c(A=1, B=2, C=3) -> x # 原子变量中的元素已经被命名
+x[c(2, 3)]
+x[c('B', 'C')]
+# 注意：x[c(B, C)] 报错
+
+# 提取列表中的元素
+# 可使用 object[index] 来提取成分(原子向量或其他列表)，其中index是一个整数向量
+# 使用上面例子中kemans的fit对象说明
+fit[c(2, 7)] # 需要注意的是，此时返回的是以列表形式出现的成分
+fit[2, ] # 报错
+fit[2, 7] # 报错
+# 可使用 object[[index]] 得到成分中的元素
+fit[2] # 输出的是列表
+fit[[2]] # 输出的是矩阵
+class(fit[[2]])
+# 注意：这种区别是很重要的，如果想把得到的结果作为一个矩阵输入，应该使用双括号
+# 可以组合符号以获得成分内的元素
+fit[[2]][1, ] # 提取fit的第二个成分并返回其中第一行 
+fit[[c(2, 7)]] # 注意：此时返回的是第二个成分的第7个元素
+fit[[2, 7]] # 报错
+# 若想获取单个的命名成分(注意：必须是命名成分)，可以使用符号 $
+# 此时，object[[index]]和object$name等价
+fit$centers 
+# 这里解释为什么符号 $ 也可以在数据框中进行操作：
+# 数据框是集合中每个原子向量都有相同长度的特殊列表，这里每个变量被看作一个成分
+# 这就是为什么iris$Sepal.Length会返回150个元素向量
+
+# 通过提取函数返回的成分和列表的元素，可以继续深入
+# 如，可以画出聚类中心的线图：
+set.seed(1234)
+kmeans(iris[1:4], 3) -> fit
+fit$centers -> means # 提取聚类中心的矩阵(行是类，列是变量的均值)
+# 矩阵通过reshape2包被重塑成长格式
+library(reshape2)
+melt(means) -> dfm
+# 等价于
+melt(means, id=c('Sepal.Length', 'Sepal.Width', 'Petal.Length', 'Petal.Width')) -> dfm
+class(dfm)
+c('Cluster', 'Measurement', 'Centimeters') -> names(dfm)
+class(dfm$Cluster)
+attributes(dfm$Cluster)
+str(dfm$Cluster)
+factor(dfm$Cluster) -> dfm$Cluster
+class(dfm$Cluster)
+attributes(dfm$Cluster)
+str(dfm$Cluster)
+head(dfm)
+str(dfm)
+# 通过ggplot2包绘制线图
+library(ggplot2)
+ggplot(data = dfm,
+       aes(x=Measurement, y= Centimeters, group=Cluster)) +
+  geom_point(size=3, aes(shape=Cluster, color=Cluster)) +
+  geom_line(size=1, aes(color=Cluster)) +
+  ggtitle('Profiles for Iris Clusters')
+# 注意：这里所有的变量作图要使用相同的测量单位(厘米)
+# 若聚类分析涉及不同尺度的变量，需要在绘图前标准化数据，并标记y轴为标准化得分
 
 # 注意：
 # 1. 对象名称中的句点.没有特殊意义，但美元符号$的含义与其他语言中的句点含义类似，
