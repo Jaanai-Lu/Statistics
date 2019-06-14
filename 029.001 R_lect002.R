@@ -57,6 +57,7 @@ print(patientdata)
 # 函数factor()以一个整数向量的形式存储类别值，同时一个由字符串(原始值)组成的内部向量将映射到这些整数上
 c('Type1', 'Type2', 'Type1', 'Type1') -> diabetes
 factor(diabetes) -> diabetes 
+diabetes
 # 将此向量存储为(1, 2, 1, 1)，并在其内部将其关联为1=Type1和2=Type2(具体赋值根据字母顺序决定)
 # 针对向量diabetes进行的任何分析都会将其视为名义型变量
 c('Poor', 'Improved', 'Excellent', 'Poor') -> status
@@ -326,7 +327,7 @@ read.table(header = TRUE, text = mydatatxt) -> mydata # read.table()处理字符
 # col.names 若数据文件的第一行不包括变量名(header=FALSE)，可以使用col.names指定一个包含变量名的字符向量
 # 若header=FALSE，且col.names选项被省略，则变量会被分别命名为V1、V2，以此类推
 # na.strings 用于表示缺失值的字符向量，如 na.strings=c('-9', '?') 在读取数据的时候把-9和?转换为NA
-# colClasses 分配到每一列的类向量
+# colClasses 指定分配到每一列的类向量
 # 如 colClasses=c('numeric', 'numeric', 'character', 'NULL', 'numeric')
 # 把前俩列读取为数值型变量，把第三列读为字符型向量，跳过第四列，把第五列读取为数值型向量
 # 若数据有多余五列，colClasses的值会被循环
@@ -343,6 +344,11 @@ read.table(header = TRUE, text = mydatatxt) -> mydata # read.table()处理字符
 # colClasses = c('character', 'character', 'character', 'numeric', 'numeric', 
 # 'numeric')) -> grades
 # 注意：此时grades作为实数而不是整数
+read.table(mytextfile, header = TRUE, sep = ',',
+           colClasses = c('numeric', 'numeric', 'character',
+                          NULL, 'numeric', NULL, 'character',
+                          NULL, NULL, NULL)) -> my.data.frame
+# 与NULL colClasses值相关的变量会被跳过不读取
 
 # 导出符号分隔文本文件：
 # write.table(x, outfile, sep = delimiter, quote = TRUE, na='NA')
