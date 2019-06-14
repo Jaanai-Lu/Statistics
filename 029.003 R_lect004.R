@@ -403,6 +403,82 @@ results
 class(results)
 
 # 可以看出，向量化版本更快且更有效
+# 在可能的情况下尽量使用矢量化而非循环
+# 这里的矢量化意味着使用R中的函数，这些函数旨在以高度优化的方法处理向量
+# 初始安装时自带的函数包括ifelse()、colSums()、rowSums()和rowMeans()
+# matrixStats包提供了很多进行其他计算的优化函数
+# plyr、dplyr、reshape2和data.table等包也提供了高度优化的函数
+set.seed(1234)
+matrix(rnorm(1000000), ncol = 10) -> mymatrix # 生成一个1000000行10列的矩阵
+# 使用循环或colSums()函数来计算列的和
+# 使用循环：
+accum <- function(x) {
+  numeric(ncol(x)) -> sums
+  for (i in 1:ncol(x)) {
+    for (j in 1:nrow(x)) {
+      sums[i] + x[j, i] -> sums[i]
+    }
+  }
+}
+system.time(accum(mymatrix)) # system.time()函数可用于确定CPU的数量和运行该函数所需的真实时间(单位：s)
+# 使用colSums()函数:
+system.time(colSums(mymatrix))
+# 矢量化函数运行速度比循环函数快得多
+
+# 高效编程：
+# 创建大小正确的对象，而不是反复调整：
+# 与从一个较小的对象开始通过附加值使其增大相比，初始化对象到所需的最终大小再填写值更加高效
+set.seed(1234)
+1000000 -> k
+rnorm(k) -> x
+0 -> y
+system.time(for (i in 1:length(x)) {
+  x[i]^2 -> y[i]
+}) # 向量x含有1000000个数值，y开始是一个单元素矢量，逐渐增长到100000个元素的向量，其中值是x的平方
+# 换种方式：
+numeric(length = k) -> y # 先初始化y为含有1000000个元素的向量
+system.time(for (i in 1:length(x)) {
+  x[i]^2 -> y[i]
+}) # 可加快速度，避免R因不断调整对象而耗费相当长的时间
+# 若使用矢量化，速度会更快：
+numeric(length = k) -> y
+system.time(x^2 -> y) # 注意：求幂、加法、乘法等操作也是向量化函数
+
+# 使用并行来处理重复、独立的任务：
+# 并行化指分配一个任务在两个或多个核上同时运行组块，并把结果合在一起
+# 这些内核可以是在同一台计算机上，也可以实在一个集群中不同的机器上
+# 并行化有利于需要重复独立执行数字密集型函数的任务，如许多蒙特卡罗方法(bootstrapping自助法等)
+# 可使用foreach和doParallel包在单机上并行化运行
+# foreach包支持foreach循环构建(遍历集合中的元素)同时便于并行执行循环
+# doParallel包为foreach包提供了一个平行的后端
+# 如，在主成分和因子分析中，关键的一步就是从数据中提取合适的成分或因子个数
+# 一种方法是重复地执行相关矩阵的特征值分析，该矩阵来自具有与初始数据相同的行和列的随机数据
+library(foreach)
+library(doParallel)
+registerDoParallel(cores = 6) # 登记电脑内核数量
+eig <- function(n, p) {
+  matrix(rnorm(n), ncol = p) -> x
+  cor(x) -> r
+  eigen(r)$values
+} # 定义特征分析函数
+1000000 -> n
+100 -> p
+500 -> k
+# 这里分析随机数据矩阵，使用foreach和%do%(此操作符按顺序运行函数)执行eig()函数500次
+system.time(
+  foreach(i=1:k, .combine = rbind) %do% eig(n, p) -> x
+) # .combine=rbind追加对象x作为行
+# 使用%dopar%操作符并行计算：
+system.time(
+  foreach(i=1:k, .combine = rbind) %dopar% eig(n, p) -> x
+)
+# 并行执行远快于顺序执行
+# 这个例子中，eig()函数的每一次迭代都是数字密集型的，不需要访问其他迭代，且没有涉及磁盘I/0
+# 这种情况下并行化程序受益最大
+# 注：R提供了确定最耗时函数分析方案的工具
+# 把代码放在Rprof()和RProf(NULL)之间进行汇总
+# 然后执行summaryRprof()函数获得执行每个函数的时间汇总
+# 具体细节 ?Rrof ?summaryRprof()
 
 # switch结构：根据一个表达式的值选择语句执行
 # 语法为 switch(expr, ...)
@@ -491,6 +567,7 @@ myenv$x
 parent.env(myenv) # 函数parent.env()展示父环境，这里myenv的父环境就是全局环境
 # 注：全局环境的父环境是空环境
 # 可使用 ?environment 查看详情
+environment()
 # 因为函数也是对象，所以函数也有环境
 # 这在探讨函数闭包function closure(以创建时状态被打包的函数)时非常重要
 # 如，由另一个函数创建的函数：
@@ -504,16 +581,36 @@ trim <- function(p) {
   trimit
 }
 # trim(p)函数返回一个函数，即从矢量中修剪掉高低值的p%
+# 能这样实现的原因是：p值被保存在函数trimit()及其环境中
 1:10 -> x
 # 等价于
-c(1:10) -> z
-trim(.1) -> trim10pct
-
-
-
-
-
-
+c(1:10) -> x
+trim(.1) -> trim10pct # trim(.1)函数返回一个函数，即从矢量中修剪掉高低值的10%
+trim10pct(x) -> y # sort.int(x, partial = c(2, 9))[2:9]
+trim(.2) -> trim20pct # trim(.2)函数返回一个函数，即从矢量中修剪掉高低值的20%
+trim20pct(x) -> y
+# 能这样实现的原因是：p值被保存在函数trimit()及其环境中
+ls(environment(trim10pct)) # 返回 "p" "trimit"
+environment(trim10pct)$p # 返回 0.1
+# 等价于
+get('p', envir = environment(trim10pct))
+# 注意：R中函数一旦被创建，里面的对象就存在于其环境中
+# 如：
+makefunction <- function(k) {
+  f <- function(x) {
+    print(x + k)
+  }
+}
+makefunction(10) -> g
+g(4) # 返回值为14
+2 -> k
+g(5) # 返回值为15
+# 无论全局环境中k为何值，g()函数使用k=10，因为此函数被创建时k被赋值为10
+ls(environment(g)) # 返回 "f" "k"
+environment(g)$k # 返回k=10
+# 注：一般情况下，对象的值是从本地环境中获得的
+# 若未在本地环境中找到对象，R会在父环境中搜索，然后是父环境的父环境，直到对象被发现
+# 若R搜索到空环境时仍然未搜索到对象，R会报错，我们称之为词法域lexical scoping
 
 # 自编的描述性统计量计算函数
 # 假设要编写一个函数，用来计算数据对象的集中趋势和散布情况
