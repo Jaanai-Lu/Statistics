@@ -360,8 +360,135 @@ sqldf('select * from mtcars where carb=1 order by mpg',
 sqldf('select avg(mpg) as avg_mpg,
       avg(disp) as avg_disp, gear from mtcars where cyl in (4, 6) group by gear')
 
+# 调试：
+# 调试是寻找和减少程序中错误或缺陷的过程
+# R处理错误和警告的方法过于简洁
+# 如：
+# 给mtcars数据集中的变量am详细的标题和标签
+factor(mtcars$a, levels = c(1, 2), labels = c('Automatic', 'Manual')) -> mtcars$Transmission
+# 等价于
+factor(mtcars$am, levels = c(1, 2), labels = c('Automatic', 'Manual')) -> mtcars$Transmission
+aov(mpg ~ Transmission, data = mtcars) # 报错
+head(mtcars[c('mpg', 'Transmission')]) # 查看传递给aov()函数的数据
+table(mtcars$Transmission) # 发现变量am被编码为1=Automatic，且有缺失，而不是我们想要的1=Automatic，2=Manual
+table(mtcars$am) # 发现变量am没有2，只有1和0
+# 而factor()函数仍然执行下去了，它将所有的1转化为Automatic，将0设为缺失，没有任何提醒或错误信息
+# 因而方差分析失败报错
+# 要学会检查确认每个输入函数是否包含我们预期的数据
 
+# 调试工具：
+# 尽管检查对象名、函数参数和函数输入可以找到很多错误来源，但有时还必须深入研究函数内部运作机制和调用函数的函数
+# 此时，R自带的内部调试器发挥作用
 
+# 内部调试函数：
+debug() # 选择一个函数进行调试
+undebug() # 关闭调试功能
+browser() # 允许单步每次调试一行函数，调试时，输入n或按回车键执行当前语句并移动到下一行语句
+# 输入c跳出单步运行模式并执行当前函数剩余的部分
+# 输入where显示调用的堆栈，输入Q退出browser()模式并立即跳到顶层
+# 其他的R命令诸如ls()、print()和赋值语句可以在调试器中使用
+trace() # 临时在函数中插入调试代码
+untrace() # 取消追踪并删除临时代码
+traceback() # 一个函数调用其他函数，它很难确定错误发生在哪，可用此函数列出导致错误的调用函数序列，最后一个调用即错误原因
 
+# 如：
+# mad()函数计算一个数值向量的中位数绝对偏差
+# 这里使用debug()函数来探索该函数的工作原理
+mad
+args(mad) # 查看形式参数，即参数名称和mad()函数的默认值
+debug(mad) # 开始debug，此后，只要mad()函数被调用，browser()函数都会被执行，会话进入browser()模式，允许一次执行一行函数
+mad(1:10) # 函数的代码会被列出，但不执行，且，提示 > 更改为 Browse[n]> ，其中n表示浏览层级，数值随每次递归调用递增
+# 在browser()模式中，可以使用其他函数，也可以通过键入赋值语句改变对象的值:
+ls() # 列出在mad()函数执行过程中，在给定点存在的对象
+center # 输入一个对象的名字将展示它的内容
+constant
+na.rm
+x
+# 这里要注意：若一个对象是以n、c或Q命名的，必须使用print(n)、print(c)或print(Q)来查看它的内容:
+n # 单步运行代码，也可按回车键
+n
+n
+print(n)
+where # where语句显示正在执行的函数调用在堆栈的何处，在有函数可调用其他函数时，它会很有用
+c # 跳出单步运行模式并执行当前函数剩余的部分
+Q # 退出browser()模式并回到R提示 >
+undebug(mad) # 关闭调试功能，注意：调试完成必须有这一步，否则后续调用该函数会进入调试模式
+
+# 当运行循环且我们想看看值是如何改变时，使用debug()函数非常有用
+# 我们可以直接在代码中嵌入browser()函数来帮助定位
+# 如，假设我们有一个变量x，它的值永远不为负
+if (x < 0) browser() # 这行代码可以让我们在出现问题时探索当前的状态
+# 当函数调试完成时，要删掉无用的代码
+
+# 通过设置选项在会话中直接进行调试：
+# 若我们有调用函数的函数，有两个会话选项可以使用：
+# R的默认状态下，当R遇到错误信息时，它会打印错误信息并退出函数
+# 设置options(error = traceback)之后，一旦错误发生就会打印调用的栈(函数调用导致出错的序列)，能帮助查看产生错误的函数
+# 设置options(error = recover)也会在出现错误时打印调用的栈
+# 此外还会提示选择列表中的一个函数，并在选择某个函数后在相应环境中调用browser()函数
+# 输入c会返回列表，输入0则退出到R提示
+# 使用recover()模式可从函数调用的序列中选择查看任何函数的任意对象
+# 通过有选择地查看对象的内容，我们可以频繁地查看且确定问题的来源
+# 要返回至R的默认状态，可设置options(error = NULL)
+
+# 如，使用recover()函数进行调试会话
+f <- function(x, y) {
+  x + y -> z
+  g(z)
+}
+
+g <- function(x) {
+  round(x) -> z
+  h(z)
+}
+
+h <- function(x) {
+  set.seed(1234)
+  rnorm(x) -> z
+  print(z)
+}
+# 函数f()调用函数g()，函数g()调用函数h()
+
+options(error = traceback) 
+f(2, -3) # 打印调用的栈(函数调用导致出错的序列)，能帮助查看产生错误的函数
+options(error = NULL) 
+f(2, -3) # 返回至R的默认状态，打印错误信息并退出函数
+options(error = recover) 
+f(2, -3) # 打印调用的栈，此外还会提示选择列表中的一个函数，并在选择某个函数后在相应环境中调用browser()函数
+
+f(2, 3) # 运行良好无报错
+f(2, -3) # 报错，且由于设置了options(error = recover)，会话立即转移到recover()模式
+# 此时，函数调用的栈被打印出来，且可以选择列表中的一个函数，并在选择某个函数后在相应环境中调用browser()函数
+# 此时，我们可以在browser()模式下检验所选择的函数
+4 # 转移到rnorm()函数，并对其进行检验
+ls() # 列出函数rnorm()中的所有对象
+mean # 返回值为 0
+sd # 返回值为 1
+print(n) # 返回值为 -1
+?rnorm
+# 我们看到n=-1，而这在rnorm()函数中是不被允许的，所以这就是问题的所在
+# 接下来要查看n为什么会变成-1，这就需要我们移动栈
+# 输入c会返回列表菜单，选择接下来要检验的函数
+3 # 转移到h()函数，并对其进行检验
+ls()
+x # 返回值为 -1
+c
+2 # 转移到g()函数，并对其进行检验
+ls()
+x # 返回值为 -1
+z # 返回值为 -1
+c
+1 # 转移到f()函数，并对其进行检验
+ls()
+z
+x
+y
+# 此时，我们已经清楚问题的所在以及其是如何一步步产生的：因为x=2，y=-3，所以z=-1
+# 查看函数f()的代码(正常情况下键入函数名即可查看函数代码)：
+print(f) # 注意：f是browser模式下的一个保留字，表明'完成当前循环或函数的执行'，我们用print()明确地避开这种特殊的意义
+c # 返回列表菜单
+0 # 退出到R提示
+# 此时等价于
+Q # 退出browser()模式并回到R提示 >
 
 
