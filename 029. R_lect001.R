@@ -2,7 +2,8 @@
 # 陆震
 # 日期：2019/05/30
 
-# R是面向对象的，区分大小写的解释型s数组编程语言
+# R是面向对象的，区分大小写的解释型数组编程语言
+# R是基于使用泛型函数的面向对象的编程语言
 # R中多数功能是由程序内置函数、用户自编函数和对对象的创建和操作所实现的
 # 其中，对象可以是任何能被赋值给变量的东西，包括常量、数据结构、函数甚至图形
 # 可以被存储和命名的任何东西都是对象
@@ -12,8 +13,84 @@
 # 名称区分大小写且不能以数字开头，句号被视为无特殊含义的简单字符
 # 每一个对象都有某种模式，描述其是如何存储的
 # 对象的属性：元信息描述对象的特性。属性能通过attributes()函数罗列出来并能通过attr()函数进行设置
-# 对象一个关键的属性是对象的类，R函数使用关于对象类的信息来确定如何处理对象
+# 对象一个关键的属性是对象的类属性，R中函数使用关于对象类的信息来确定如何处理对象
+# 这个类属性决定当对象的副本传递到类似于print()、plot()和summary()这些泛型函数时运行什么代码
 # 可使用class()函数读取和设置对象的类
+
+# 面向对象的编程：
+# R中有两个分离的面向对象编程的模型：S3、S4模型
+# S3模型相对更老、更简单、结构更少，且在R中有最多的应用；S4模型更新且更复杂
+# 这里主要集中讨论S3模型
+
+# 泛型函数：
+# R使用对象的类来确定当一个泛型函数被调用时采取什么样的行动
+summary(women) # summary()函数对women数据框中的每个变量都进行了描述性分析
+lm(weight ~ height, data = women) -> fit
+summary(fit) # summary()函数对该数据框的线性回归模型进行了描述
+# 查看summary()函数的代码
+summary # 通过去掉括号查看函数代码，不可见的函数(在方法列表中加星号的函数)不能通过这种方式查看代码
+# 返回：
+# function (object, ...) 
+# UseMethod("summary")
+# <bytecode: 0x7fc2fe805690>
+# <environment: namespace:base>
+# 查看women数据框和fit对象的类
+class(women) # 返回值为 "data.frame"
+class(fit) # 返回值为 "lm"
+# 若summary.data.frame(women)存在，summary(women)执行summary.data.frame(women)，否则执行summary.default(women)
+# 同样，若summary.lm(fit)存在，summary(fit)执行summary.lm(fit)，否则执行summary.default(fit)
+# UseMethod()函数将对象分派给一个泛型函数，前提是该泛型函数有扩展与对象的类匹配
+# 可使用methods()函数列出可获得的S3泛型函数
+methods(summary) # 返回的函数个数取决于电脑上安装的包的个数
+# 在我的电脑上，独立的summary()函数定义了32类
+summary.data.frame # 通过去掉括号查看函数代码
+summary.loess # 通过去掉括号查看函数代码，不可见的函数(在方法列表中加星号的函数)不能通过这种方式查看代码
+# 此时，可以使用getAnywhere()函数来查看代码
+getAnywhere(summary.loess)
+# 注：可以通过查看现有代码学习自编函数
+
+# 对象的类可以是任意的字符串，诸如numeric、matrix、data.frame、array、lm、gm、table的类
+# 此外，泛型函数不一定是print()、plot()、summary()，任意的函数都可以是泛型的
+# 如，下面定义一个名为mymethod()的泛型函数：
+# 定义泛型函数
+mymethod <- function(x, ...) 
+  UseMethod('mymethod') 
+mymethod.a <- function(x)
+  print('Using A') # mymethod()泛型函数定义为类a的对象
+mymethod.b <- function(x)
+  print('Using B') # mymethod()泛型函数定义为类b的对象
+mymethod.default <- function(x) 
+  print('Using Default') # mymethod()泛型函数定义default()函数
+1:5 -> x
+6:10 -> y
+10:15 -> z
+'a' -> class(x) # 给对象分配类
+'b' -> class(y) # 给对象分配类
+mymethod(x) # 相应的函数被调用，返回值为 "Using A"
+mymethod(y) # 相应的函数被调用，返回值为 "Using B"
+# 因为对象z为integer类，且没有定义好的mymethod.integer()函数，故默认的方法用于对象z
+mymethod(z) # 相应的函数被调用，返回值为 "Using Default"
+mymethod.a(x) # 返回值为 "Using A"
+mymethod.a(y) # 返回值为 "Using A"
+# 一个对象可以被分配多个类：
+c('a', 'b') -> class(z) # 当对象z被分配到两类时，第一类决定调用哪个泛型函数
+mymethod(z) # 返回值为 "Using A"
+c('b', 'a') -> class(z)
+mymethod(z) # 返回值为 "Using B"
+c('c', 'a', 'b') -> class(z) 
+# 泛型函数中没有'c'类，即没有mymethod.c()函数，故下一个类'a'被使用，
+# R从左到右搜索类的列表，寻找第一个可用的泛型函数
+mymethod(z) # 返回值为 "Using A"
+
+# S3模型的限制：
+# S3对象模型的主要限制是：任意的类能被分配到任意的对象上，没有完整性检验。
+'lm' -> class(women)
+summary(women)
+# women数据框被分配到lm类，无意义，且会报错
+# 相比之下，S4面向对象编程的模型更加正式、严格，旨在克服由S3方法的结构化程度较低引起的困难
+# 在S4方法中，类被定义为具有包含特定类型信息(也就是输入的变量)的槽的抽象对象
+# 对象和方法构造在强制执行的规则内被正式定义
+# 不过，使用S4模型编程更加复杂且互动更少
 
 # 一次交互式会话期间的所有数据对象都被R保存在内存中，所以R往往受限于可用的内存量
 # 在处理大数据集的时候，需要考虑数据集的大小和要应用的统计方法
