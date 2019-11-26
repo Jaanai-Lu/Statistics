@@ -125,6 +125,137 @@ pip install tpot
 这里，我用了 Big Mart Sales（数据集地址：https://datahack.analyticsvidhya.com/contest/practice-problem-big-mart-sales-iii/）数据集，
 为实现做准备，我们先快速下载训练和测试文件，以下是 python 代码：
 
+# import basic libraries
+
+import numpy as np 
+import pandas as pd 
+import matplotlib.pyplot as plt 
+%matplotlib inline 
+from sklearn import preprocessing 
+from sklearn.metrics import mean_squared_error 
+
+train = pd.read_csv('train_kOBLwZA.csv')
+
+test = pd.read_csv('test_t02dQwI.csv')
+
+# preprocessing 预处理 
+# mean imputations 插补缺失值 
+
+train['Item_Weight'].fillna((train['Item_Weight'].mean()), 
+                            inplace=True)
+test['Item_Weight'].fillna((test['Item_Weight'].mean()), 
+                           inplace=True)
+
+# reducing fat content to only two categories 
+
+# 低脂肪类别全部换成Low Fat
+train['Item_Fat_Content'] = train['Item_Fat_Content'].replace(['low fat','LF'], 
+                                                              ['Low Fat','Low Fat']) 
+# 常规类别全部换成Regular
+train['Item_Fat_Content'] = train['Item_Fat_Content'].replace(['reg'], 
+                                                              ['Regular']) 
+test['Item_Fat_Content'] = test['Item_Fat_Content'].replace(['low fat','LF'], 
+                                                            ['Low Fat','Low Fat']) 
+test['Item_Fat_Content'] = test['Item_Fat_Content'].replace(['reg'], 
+                                                            ['Regular']) 
+
+# 不要年份，要具体成立多少年
+train['Outlet_Establishment_Year'] = 2013 - train['Outlet_Establishment_Year'] 
+test['Outlet_Establishment_Year'] = 2013 - test['Outlet_Establishment_Year'] 
+
+# 填补缺少标签的Outlet_Size
+train['Outlet_Size'].fillna('Small',inplace=True)
+test['Outlet_Size'].fillna('Small',inplace=True)
+
+train['Item_Visibility'] = np.sqrt(train['Item_Visibility'])
+test['Item_Visibility'] = np.sqrt(test['Item_Visibility'])
+
+# 创建特征列表
+col = ['Outlet_Size','Outlet_Location_Type','Outlet_Type',
+       'Item_Fat_Content']
+# 增加test因变量那一列，设置全部为0
+test['Item_Outlet_Sales'] = 0
+# 将俩个数据集合并
+combi = train.append(test) 
+
+number = preprocessing.LabelEncoder()
+# 这几个特征进行编码
+for i in col:
+ combi[i] = number.fit_transform(combi[i].astype('str'))
+ combi[i] = combi[i].astype('object')
+    
+# 重新将这俩个数据集分开
+train = combi[:train.shape[0]]
+test = combi[train.shape[0]:]
+
+# 测试集去掉因变量那一列
+test.drop('Item_Outlet_Sales',axis=1,inplace=True)
+
+# removing id variables 
+# 去掉没有意义的自变量
+tpot_train = train.drop(['Outlet_Identifier','Item_Type',
+                         'Item_Identifier'],axis=1)
+tpot_test = test.drop(['Outlet_Identifier','Item_Type',
+                       'Item_Identifier'],axis=1)
+
+target = tpot_train['Item_Outlet_Sales']
+tpot_train.drop('Item_Outlet_Sales',axis=1,inplace=True)
+
+# finally building model using tpot library
+
+from tpot import TPOTRegressor
+from sklearn.model_selection import train_test_split 
+X_train, X_test, y_train, y_test = train_test_split(tpot_train, 
+                                                    target,
+ train_size=0.75, test_size=0.25)
+
+tpot = TPOTRegressor(generations=5, population_size=50, verbosity=2)
+tpot.fit(X_train, y_train)
+print(tpot.score(X_test, y_test))
+# 一旦这些代码运行完成，
+# tpot_exported_pipeline.py 里就将会放入用于路径优化的 python 代码。
+# 我们可以发现，ExtraTreeRegressor 可以最好地解决这个问题。
+tpot.export('tpot_boston_pipeline.py')
+
+## predicting using tpot optimised pipeline
+
+tpot_pred = tpot.predict(tpot_test)
+sub1 = pd.DataFrame(data=tpot_pred)
+#sub1.index = np.arange(0, len(test)+1)
+
+sub1 = sub1.rename(columns = {'0':'Item_Outlet_Sales'})
+sub1['Item_Identifier'] = test['Item_Identifier']
+sub1['Outlet_Identifier'] = test['Outlet_Identifier']
+sub1.columns = ['Item_Outlet_Sales','Item_Identifier','Outlet_Identifier']
+sub1 = sub1[['Item_Identifier','Outlet_Identifier','Item_Outlet_Sales']]
+sub1.to_csv('tpot.csv',index=False)
+
+TPOT 库有一个简单的规则。如果你不运行 TPOT 太久，那么它就不会为你的问题找出最可能传递方式。
+所以，你得增加进化的代数，其它的交给 TPOT 就行。
+此外，你也可以用这个库来处理分类问题。进一步内容可以参考这个文档：http://rhiever.github.io/tpot/。
+除了比赛，在生活中我们也有很多应用场景可以用到遗传算法。
+
+6、 实际应用
+遗传算法在真实世界中有很多应用。这里列了部分有趣的场景。
+
+6.1 工程设计
+工程设计非常依赖计算机建模以及模拟，这样才能让设计周期过程即快又经济。遗传算法在这里可以进行优化并给出一个很好的结果。
+相关资源：
+论文：Engineering design using genetic algorithms
+地址：http://lib.dr.iastate.edu/cgi/viewcontent.cgi?article=16942&context=rtd
+
+6.2 交通与船运路线（Travelling Salesman Problem，巡回售货员问题）
+这是一个非常著名的问题，它已被很多贸易公司用来让运输更省时、经济。解决这个问题也要用到遗传算法。
+
+6.3 机器人
+遗传算法在机器人领域中的应用非常广泛。实际上，目前人们正在用遗传算法来创造可以像人类一样行动的自主学习机器人，其执行的任务可以是做饭、洗衣服等等。
+相关资源：
+论文：Genetic Algorithms for Auto-tuning Mobile Robot Motion Control
+地址：https://pdfs.semanticscholar.org/7c8c/faa78795bcba8e72cd56f8b8e3b95c0df20c.pdf
+
+
+
+
 
 
 
