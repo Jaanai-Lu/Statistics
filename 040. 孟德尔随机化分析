@@ -1,0 +1,137 @@
+流行病学研究常见的分析就是相关性分析了。
+
+相关性分析某种程度上可以为我们提供一些研究思路，比如缺乏元素A与某种癌症相关，那么我们可以通过补充元素A来减少患癌率。
+这个结论的大前提是缺乏元素A会导致这种癌症，也就是说元素A和癌症有因果关系。
+
+但实际上，元素A和癌症有相关性，不代表他们之间就有因果关系。也有可能是患癌症的人同时有其他的并发症，这种并发症会导致元素A缺乏。
+
+再比如，研究表明，大胸女生与不爱运动相关。
+那么，到底是因为胸大的女性不爱运动，还是因为不爱运动导致胸大（肥胖）。
+
+如果不做其他分析，光看这个相关性，我们是无法得知这两个表征之间是否有真实的因果关系。
+
+为了阐明这些表征是否有因果关系，我们一般在研究中考虑加入孟德尔随机化分析。
+
+1. 孟德尔随机化分析的思想
+还是前面的例子，假定我们认为大胸的人（因）不愿意运动（果）。
+那我们的研究思路就是找到与大胸有关的显著遗传位点，再分析这些遗传位点是否也与不爱运动相关。
+如果与大胸相关的遗传位点同时也与不爱运动相关，那么我们就会认为大胸的人就是不爱运动。
+反过来，如果与大胸相关的遗传位点与不爱运动没有关系，那么我们认为大胸跟不爱运动是没有因果关系的，他们之间存在相关性可能是由其他的因素导致的。
+
+2. 为什么孟德尔随机化研究采用遗传位点作为分析媒介
+原因很简单，遗传位点是我们出生就决定了的，后期不会随文化、经济等因素改变。
+如果我们发现位点A与大胸有相关性，那么毫无疑问，是位点A影响了胸部大小。
+反过来说就不成立了，因为胸大，所以遗传位点会变为A，这样的结论听起来就很怪异。
+
+3 孟德尔随机化研究计算原理
+3.1 找到影响大胸的SNP位点
+这个目前最流行的方法就是全基因组关联分析（GWAS）了。
+通过获取不同个体的罩杯大小（表型）和他们的遗传位点（基因型），做全基因组关联分析。
+
+3.2 将影响大胸的显著信号位点作为后续分析的位点
+我们对显著信号位点的定义是P值<5*10-8
+
+3.3 计算大胸显著信号位点与不爱运动的关系
+同样可以用全基因组关联分析方法。
+随后获得大胸显著信号位点与不爱运动的效应值(BETA)或者风险值（OR）。
+
+3.4 画显著信号位点分别在大胸和不爱运动的效应值散点图，散点图的斜率代表大胸对不爱运动这个行为的影响大小（causal effect）。
+
+4 怎么做孟德尔随机化分析
+下面举一个简单的小例子。
+4.1 安装R包
+pacman::p_load(devtools)
+# ?install_github
+install_github("MRCIEU/TwoSampleMR")
+
+4.2 导入大胸（exposure）的显著信号位点
+library(TwoSampleMR)
+# ?system.file
+# 从包中搜索到特定资料
+bmi_file <- system.file("data/bmi.txt", package="TwoSampleMR")
+# ?read_exposure_data
+exposure_dat <- read_exposure_data(bmi_file)
+# 大胸显著信号位点数据格式
+head(exposure_dat)
+
+4.3 导入显著信号位点与不爱运动的相关性数据
+outcome_dat <- read_outcome_data(snps = exposure_dat$SNP,
+                                 filename = "F:/download/test.csv", 
+                                 sep = ",",snp_col = "SNP",
+                                 beta_col = "beta",se_col = "se",
+                                 effect_allele_col = "effect_allele",
+                                 other_allele_col = "other_allele",
+                                 eaf_col = "eaf",
+                                 samplesize_col = "samplesize")
+导入显著信号位点与不爱运动的相关性数据outcome_dat
+head(outcome_dat)
+
+4.4 统一大胸和不爱运动的效应值方向
+dat <- harmonise_data(exposure_dat, outcome_dat)
+
+4.5 孟德尔随机化分析
+res <- mr(dat)
+结果不显著，说明两者有相关性，但是没有因果关系。
+
+4.6 画散点图
+p1 <- mr_scatter_plot(res, dat)
+p1[[1]]
+
+4.7 补充其他分析
+4.7.1 Heterogeneity statistics
+mr_heterogeneity(dat)
+
+4.7.2 Horizontal pleiotropy
+mr_pleiotropy_test(dat)
+
+4.7.3 Single SNP analysis
+res_single <- mr_singlesnp(dat)
+
+4.7.4 Leave-one-out analysis
+res_loo <- mr_leaveoneout(dat)
+
+4.7.5 Forest plot
+res_single <- mr_singlesnp(dat)
+p2 <- mr_forest_plot(res_single)
+p2[[1]]
+
+4.7.6 Leave-one-out plot
+res_loo <- mr_leaveoneout(dat)
+p3 <- mr_leaveoneout_plot(res_loo)
+p3[[1]]
+
+4.7.7 Funnel plot
+res_single <- mr_singlesnp(dat)
+p4 <- mr_funnel_plot(res_single)
+p4[[1]]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
