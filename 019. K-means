@@ -39,6 +39,12 @@ K-means 有一个著名的解释：牧师—村民模型：
 3. 针对每个类别，重新计算它的聚类中心（即属于该类的所有样本的质心）；
 4. 重复上面 2 3 两步操作，直到达到某个中止条件（迭代次数、最小误差变化等）。
 
+So k-means clustering requires some distance metric (say Euclidean), 
+a hypothesized fixed number of clusters, and an initial guess as to cluster centroids.
+
+When it's finished k-means clustering returns a final position of each cluster's centroid 
+as well as the assignment of each data point or observation to a cluster.
+
 具体步骤：
 1. 选择K，这是聚类的数量
 虽然我们讨论的是无监督机器学习，但算法并不会神奇地将输入数据集聚集到一定数量的聚类中，我们需要指定我们想要的聚类个数。
