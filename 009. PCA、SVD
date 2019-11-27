@@ -1,3 +1,64 @@
+"""
+Exploratory Data Analysis:
+a face that could launch a 1000 ships 描述PCA、SVD以小博大
+"""
+head(dataMatrix)
+heatmap(dataMatrix)
+myedit('addPatt.R')
+
+rbinom(1,size=1,prob=0.5) # 抛硬币
+rep(c(0,3),each=5) # 每次数字产生5个
+set.seed(678910)
+for(i in 1:40){
+  # flip a coin
+  coinFlip <- rbinom(1,size=1,prob=0.5)
+  # if coin is heads add a common pattern to that row
+  if(coinFlip){
+    # 抛硬币决定是否改变那一行，1为改变
+    # 改变的行，前5列不变，后5列加3
+    dataMatrix[i,] <- dataMatrix[i,] + rep(c(0,3),each=5)
+  }
+}
+
+source("addPatt.R",local = TRUE) # 运行脚本
+
+# 奇异值分解 Singular Value Decomposition
+svd(mat) 
+# X=UDV^t
+matu %*% diag %*% t(matv) # 矩阵乘法、矩阵转置
+# 对矩阵进行中心化处理，然后svd
+svd(scale(mat))
+
+# PCA
+# PCA之前要进行中心化处理
+prcomp(scale(mat))
+# PCA of a scaled matrix yields the V matrix (right singular vectors) of the same scaled matrix.
+
+svd1$v[,1]
+svd1$d
+svd2$v[,1:2]
+
+dim(faceData) # 查看数据矩阵的大小
+
+# 矩阵相乘以及和标量相乘的顺序以及括号
+a1 <- svd1$u[,1] %*% t(svd1$v[,1]) * svd1$d[1]
+# 等价于
+a1 <- (svd1$u[,1] * svd1$d[1]) %*% t(svd1$v[,1])
+# 当有俩个成分时，要让d成为含有俩个成分的对角矩阵
+a2 <- svd1$u[,1:2] %*% diag(svd1$d[1:2]) %*% t(svd1$v[,1:2])
+
+# PCA和SVD都是降维，因而都可以用来做数据压缩，可以用来压缩图片
+myImage(svd1$u[,1:5] %*% diag(svd1$d[1:5]) %*% t(svd1$v[,1:5])) # 5个成分
+myImage(svd1$u[,1:10] %*% diag(svd1$d[1:10]) %*% t(svd1$v[,1:10])) # 10个成分
+
+# SVD:
+# A matrix X has the singular value decomposition UDV^t. 
+# The principal components of X are the columns of V.
+# U and V give us vectors and D gave us values.
+# The singular values of X are the diagonal elements of D.
+# D gives the singular values of a matrix in decreasing order of weight.
+
+
 PCA:
 1. 简述主成分分析PCA的工作原理，以及PCA的优缺点？
   PCA旨在找到数据中的主成分，并利用这些主成分表征原始数据，从而达到降维的目的。
